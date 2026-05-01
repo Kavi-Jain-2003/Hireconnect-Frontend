@@ -1,0 +1,11 @@
+.apps-layout { display: grid; grid-template-columns: 280px 1fr; gap: 24px; align-items: start; min-height: 400px; }
+.job-selector { position: sticky; top: 96px; max-height: calc(100vh - 140px); overflow-y: auto; }
+.job-select-item { padding: 14px 20px; border-bottom: 1px solid var(--border); cursor: pointer; transition: var(--transition); }
+.job-select-item:last-child { border-bottom: none; }
+.job-select-item:hover { background: var(--cream); }
+.job-select-item.active { background: rgba(0,201,167,0.05); border-left: 3px solid var(--teal); padding-left: 17px; }
+.apps-panel { min-height: 300px; }
+.apps-panel-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; h3 { font-size: 20px; } }
+.app-cards { display: flex; flex-direction: column; gap: 16px; }
+.app-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+@media (max-width: 1024px) { .apps-layout { grid-template-columns: 1fr; } .job-selector { position: static; max-height: none; } }

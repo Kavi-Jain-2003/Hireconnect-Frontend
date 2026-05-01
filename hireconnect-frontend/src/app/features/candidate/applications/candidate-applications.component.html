@@ -1,0 +1,56 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">My Applications</h1>
+    <p class="page-subtitle">Track every application you've submitted</p>
+  </div>
+  <select class="form-control" style="width:200px" [(ngModel)]="filterStatus">
+    <option value="">All Statuses</option>
+    <option value="APPLIED">Applied</option>
+    <option value="SHORTLISTED">Shortlisted</option>
+    <option value="INTERVIEW_SCHEDULED">Interview Scheduled</option>
+    <option value="OFFERED">Offered</option>
+    <option value="REJECTED">Rejected</option>
+    <option value="WITHDRAWN">Withdrawn</option>
+  </select>
+</div>
+
+<div class="alert alert-error" *ngIf="error">{{error}}</div>
+<div class="loading-wrapper" *ngIf="loading"><div class="spinner"></div></div>
+
+<div class="empty-state" *ngIf="!loading && !error && filtered.length === 0">
+  <div class="empty-icon">📋</div>
+  <div class="empty-title">No applications found</div>
+  <div class="empty-text"><a routerLink="/jobs">Browse jobs</a> and apply to get started</div>
+</div>
+
+<div class="table-wrapper" *ngIf="!loading && filtered.length > 0">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Job</th><th>Company</th><th>Location</th><th>Applied On</th><th>Status</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let app of filtered">
+        <td>
+          <a [routerLink]="['/jobs', app.jobId]" style="color:var(--navy);font-weight:600">
+            {{app.job?.title || 'Job #' + app.jobId}}
+          </a>
+        </td>
+        <td>{{app.job?.company || '—'}}</td>
+        <td>{{app.job?.location || '—'}}</td>
+        <td>{{app.appliedAt | date:'dd MMM yyyy'}}</td>
+        <td><span class="badge" [class]="statusClass(app.status)">{{label(app.status)}}</span></td>
+        <td>
+          <button class="btn btn-danger btn-sm" (click)="withdraw(app.applicationId)"
+            [disabled]="withdrawingId === app.applicationId || app.status === 'OFFERED' || app.status === 'REJECTED' || app.status === 'WITHDRAWN'"
+            *ngIf="app.status !== 'REJECTED' && app.status !== 'WITHDRAWN' && app.status !== 'OFFERED'">
+            <span *ngIf="withdrawingId === app.applicationId" class="spinner" style="width:13px;height:13px;border-width:2px"></span>
+            <span *ngIf="withdrawingId !== app.applicationId">Withdraw</span>
+          </button>
+          <span *ngIf="app.status === 'REJECTED' || app.status === 'WITHDRAWN' || app.status === 'OFFERED'" class="text-sm text-muted">—</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

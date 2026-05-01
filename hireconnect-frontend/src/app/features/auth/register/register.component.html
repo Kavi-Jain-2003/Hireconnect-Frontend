@@ -1,0 +1,86 @@
+<div class="auth-page">
+  <div class="auth-left">
+    <a class="auth-brand" routerLink="/">Hire<span>Connect</span></a>
+    <div class="auth-quote">
+      <h2>"Your next career milestone starts right here."</h2>
+      <p>Create your free account and access hundreds of opportunities from top companies across India.</p>
+    </div>
+    <div class="auth-dots">
+      <span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span>
+    </div>
+  </div>
+
+  <div class="auth-right">
+    <div class="auth-form-wrapper">
+      <div class="auth-header">
+        <h1>Create Account</h1>
+        <p>Join HireConnect for free today</p>
+      </div>
+
+      <div class="alert alert-success" *ngIf="success">{{success}}</div>
+
+      <div class="alert alert-error" *ngIf="error">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>{{error}}
+          <a *ngIf="error.includes('already')" routerLink="/auth/login" style="color:var(--navy);font-weight:600;margin-left:4px">Sign in →</a>
+        </span>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
+
+        <!-- Role selector -->
+        <div class="role-selector">
+          <label class="role-option" [class.selected]="selectedRole === 'CANDIDATE'" (click)="selectRole('CANDIDATE')">
+            <div class="role-icon">👨‍💼</div>
+            <div class="role-name">Candidate</div>
+            <div class="role-desc">Looking for a job</div>
+          </label>
+          <label class="role-option" [class.selected]="selectedRole === 'RECRUITER'" (click)="selectRole('RECRUITER')">
+            <div class="role-icon">🏢</div>
+            <div class="role-name">Recruiter</div>
+            <div class="role-desc">Hiring talent</div>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label>Email Address</label>
+          <input class="form-control" type="email" formControlName="email"
+            placeholder="you@company.com" autocomplete="email"
+            [class.error]="form.get('email')?.invalid && form.get('email')?.touched">
+          <div class="field-error" *ngIf="form.get('email')?.errors?.['email'] && form.get('email')?.touched">
+            Please enter a valid email address
+          </div>
+          <div class="field-error" *ngIf="form.get('email')?.errors?.['required'] && form.get('email')?.touched">
+            Email is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <div class="password-wrap">
+            <input class="form-control" [type]="showPassword ? 'text' : 'password'"
+              formControlName="password" placeholder="At least 6 characters" autocomplete="new-password"
+              [class.error]="form.get('password')?.invalid && form.get('password')?.touched">
+            <button type="button" class="toggle-pw" (click)="showPassword = !showPassword">
+              {{showPassword ? 'Hide' : 'Show'}}
+            </button>
+          </div>
+          <div class="field-error" *ngIf="form.get('password')?.errors?.['minlength'] && form.get('password')?.touched">
+            Password must be at least 6 characters
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-teal w-full" [disabled]="loading"
+          style="justify-content:center;padding:14px;font-size:15px">
+          <span *ngIf="loading" class="spinner" style="width:18px;height:18px;border-width:2px"></span>
+          <span *ngIf="!loading">Create Account</span>
+        </button>
+      </form>
+
+      <div class="auth-footer">Already have an account? <a routerLink="/auth/login">Sign in</a></div>
+      <div class="back-home"><a routerLink="/">← Back to home</a></div>
+    </div>
+  </div>
+</div>

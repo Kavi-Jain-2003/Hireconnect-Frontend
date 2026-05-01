@@ -1,0 +1,73 @@
+import { Component, OnInit } from '@angular/core';
+import { NotificationService } from '../../../core/services/interview-notification.service';
+import { Notification } from '../../../core/models';
+
+@Component({
+  standalone: false,
+  selector: 'app-candidate-notifications',
+  templateUrl: './candidate-notifications.component.html',
+  styleUrls: ['./candidate-notifications.component.scss']
+})
+export class CandidateNotificationsComponent implements OnInit {
+  notifications: Notification[] = [];
+  loading = true;
+  markingAll = false;
+
+  constructor(private notifSvc: NotificationService) {}
+
+  ngOnInit() {
+    this.load();
+  }
+
+  load() {
+    this.loading = true;
+    this.notifSvc.getMyNotifications().subscribe({
+      next: n => {
+        const unique = new Map<string, Notification>();
+        n.forEach(item => {
+          const key = `${item.type}|${item.message}`;
+          const current = unique.get(key);
+          if (!current || new Date(item.createdAt).getTime() > new Date(current.createdAt).getTime()) {
+            unique.set(key, item);
+          }
+        });
+        this.notifications = Array.from(unique.values())
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        this.loading = false;
+      },
+      error: () => { this.loading = false; }
+    });
+  }
+
+  markRead(id: number) {
+    this.notifSvc.markRead(id).subscribe({
+      next: () => { this.notifications = this.notifications.map(n => n.notificationId === id ? { ...n, isRead: true } : n); },
+      error: () => {}
+    });
+  }
+
+  markAllRead() {
+    this.markingAll = true;
+    this.notifSvc.markAllRead().subscribe({
+      next: () => { this.notifications = this.notifications.map(n => ({ ...n, isRead: true })); this.markingAll = false; },
+      error: () => { this.markingAll = false; }
+    });
+  }
+
+  delete(id: number) {
+    this.notifSvc.delete(id).subscribe({
+      next: () => { this.notifications = this.notifications.filter(n => n.notificationId !== id); },
+      error: () => {}
+    });
+  }
+
+  get unreadCount() { return this.notifications.filter(n => !n.isRead).length; }
+
+  typeIcon(type: string) {
+    const icons: Record<string, string> = {
+      APPLICATION_STATUS: '📋', INTERVIEW: '📅', JOB_ALERT: '💼',
+      INTERVIEW_SCHEDULED: '📅', OFFER: '🎉'
+    };
+    return icons[type] || '🔔';
+  }
+}

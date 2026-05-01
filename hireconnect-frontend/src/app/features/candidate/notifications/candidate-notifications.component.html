@@ -1,0 +1,39 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Notifications</h1>
+    <p class="page-subtitle">Stay updated on your applications and interviews</p>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center">
+    <span class="badge badge-rose" *ngIf="unreadCount > 0">{{unreadCount}} unread</span>
+    <button class="btn btn-outline btn-sm" (click)="markAllRead()" [disabled]="markingAll || unreadCount === 0">
+      <span *ngIf="markingAll" class="spinner" style="width:13px;height:13px;border-width:2px"></span>
+      <span *ngIf="!markingAll">Mark all read</span>
+    </button>
+    <button class="btn btn-ghost btn-sm" (click)="load()">Refresh ↺</button>
+  </div>
+</div>
+
+<div class="loading-wrapper" *ngIf="loading"><div class="spinner"></div></div>
+
+<div class="empty-state" *ngIf="!loading && notifications.length === 0">
+  <div class="empty-icon">🔔</div>
+  <div class="empty-title">No notifications yet</div>
+  <div class="empty-text">You'll be notified when your application status changes or an interview is scheduled</div>
+</div>
+
+<div class="notif-list" *ngIf="!loading && notifications.length > 0">
+  <div class="notif-card" *ngFor="let n of notifications" [class.unread]="!n.isRead">
+    <div class="notif-icon">{{typeIcon(n.type)}}</div>
+    <div class="notif-body">
+      <div class="notif-message">{{n.message}}</div>
+      <div class="notif-meta">
+        <span class="badge badge-gray" style="font-size:11px">{{n.type | titlecase}}</span>
+        <span class="text-sm text-muted">{{n.createdAt | date:'dd MMM yyyy, hh:mm a'}}</span>
+      </div>
+    </div>
+    <div class="notif-actions">
+      <button class="btn btn-ghost btn-sm" (click)="markRead(n.notificationId)" *ngIf="!n.isRead" title="Mark as read">✓</button>
+      <button class="btn btn-ghost btn-sm" (click)="delete(n.notificationId)" title="Delete" style="color:var(--rose)">✕</button>
+    </div>
+  </div>
+</div>
