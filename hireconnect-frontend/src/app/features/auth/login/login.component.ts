@@ -32,9 +32,7 @@ export class LoginComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       if (params['token']) {
         this.auth.loginWithToken(params['token'], params['email'] || '', params['role'] || 'CANDIDATE');
-        const role = params['role'] || 'CANDIDATE';
-        if (role === 'RECRUITER') this.router.navigate(['/recruiter/dashboard']);
-        else this.router.navigate(['/candidate/dashboard']);
+        this.redirectByRole(params['role'] || 'CANDIDATE');
       }
     });
   }
@@ -48,8 +46,7 @@ export class LoginComponent implements OnInit {
     this.error = '';
     this.auth.login(this.form.value).subscribe({
       next: res => {
-        if (res.role === 'RECRUITER') this.router.navigate(['/recruiter/dashboard']);
-        else this.router.navigate(['/candidate/dashboard']);
+        this.redirectByRole(res.role);
       },
       error: err => {
         this.error = err.error?.message || 'Invalid email or password. Please try again.';
@@ -58,8 +55,14 @@ export class LoginComponent implements OnInit {
     });
   }
 
-  // GitHub OAuth — goes directly to backend port (not through proxy)
-  // because OAuth2 requires browser session cookies, not XHR
+  // ── centralised role → route mapping ──────────────────────────
+  private redirectByRole(role: string) {
+    const r = (role || '').replace(/^ROLE_/, '').toUpperCase();
+    if (r === 'ADMIN')     this.router.navigate(['/admin/dashboard']);
+    else if (r === 'RECRUITER') this.router.navigate(['/recruiter/dashboard']);
+    else                        this.router.navigate(['/candidate/dashboard']);
+  }
+
   loginWithGitHub() {
     window.location.href = 'http://localhost:8081/oauth2/authorization/github';
   }

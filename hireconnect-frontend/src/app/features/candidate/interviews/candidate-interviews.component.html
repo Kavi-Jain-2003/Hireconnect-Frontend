@@ -18,15 +18,35 @@
 <div class="interviews-grid" *ngIf="!loading && interviews.length > 0">
   <div class="card interview-card" *ngFor="let iv of interviews">
     <div class="card-body">
+
       <div class="flex justify-between items-center mb-16">
         <div>
-          <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em">Application #{{iv.applicationId}}</div>
+          <!-- Job title (NEW) -->
+          <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em">
+            {{ jobTitleByAppId[iv.applicationId] || ('Application #' + iv.applicationId) }}
+          </div>
           <div style="font-size:20px;font-weight:700;color:var(--navy);margin-top:4px">
             {{iv.scheduledAt | date:'EEEE, dd MMM yyyy'}}
           </div>
           <div style="font-size:15px;color:var(--teal-dim);font-weight:500">{{iv.scheduledAt | date:'hh:mm a'}}</div>
         </div>
         <span class="badge" [class]="statusClass(iv.status)">{{statusLabel(iv.status)}}</span>
+      </div>
+
+      <!-- ── Recruiter info card (NEW) ── -->
+      <div *ngIf="recruiterByAppId[iv.applicationId]"
+           style="background:var(--cream);border-radius:8px;padding:10px 14px;margin-bottom:16px;border-left:3px solid var(--teal)">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:4px">Scheduled by</div>
+        <div style="font-size:14px;font-weight:600;color:var(--navy)">
+          {{ recruiterByAppId[iv.applicationId].fullName }}
+        </div>
+        <div style="font-size:13px;color:var(--teal-dim);margin-top:2px">
+          ✉ {{ recruiterByAppId[iv.applicationId].email }}
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px"
+             *ngIf="recruiterByAppId[iv.applicationId].companyName">
+          🏢 {{ recruiterByAppId[iv.applicationId].companyName }}
+        </div>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
@@ -54,13 +74,14 @@
         <button class="btn btn-danger btn-sm" (click)="cancel(iv.interviewId)">Cancel</button>
       </div>
       <div *ngIf="iv.status === 'CONFIRMED'" class="text-sm" style="color:var(--teal-dim);font-weight:500">✓ You confirmed this interview</div>
-      <div *ngIf="iv.status === 'RESCHEDULED'" class="text-sm" style="color:var(--navy);font-weight:500">Interview rescheduled by candidate</div>
+      <div *ngIf="iv.status === 'RESCHEDULED'" class="text-sm" style="color:var(--navy);font-weight:500">Interview rescheduled by you</div>
       <div *ngIf="iv.status === 'CANCELLED'" class="text-sm text-muted">This interview was cancelled</div>
       <div *ngIf="iv.status === 'COMPLETED'" class="text-sm text-muted">Interview completed</div>
     </div>
   </div>
 </div>
 
+<!-- Reschedule Modal -->
 <div class="modal-overlay" *ngIf="showRescheduleModal">
   <div class="modal">
     <div class="modal-header">

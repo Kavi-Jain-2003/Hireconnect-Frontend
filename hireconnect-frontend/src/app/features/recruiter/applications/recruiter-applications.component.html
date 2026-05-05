@@ -5,7 +5,7 @@
   </div>
 </div>
 
-<div class="alert alert-success" *ngIf="msg && !showScheduleModal">{{msg}}</div>
+<div class="alert" [class]="msgType === 'success' ? 'alert-success' : 'alert-error'" *ngIf="msg && !showScheduleModal">{{msg}}</div>
 
 <div class="apps-layout">
   <div class="card job-selector">
@@ -38,16 +38,37 @@
       <div class="app-cards" *ngIf="apps.length > 0">
         <div class="card app-card" *ngFor="let app of apps; let i = index">
           <div class="card-body">
+
             <div class="flex justify-between items-center mb-16">
               <div>
-                <div style="font-size:15px;font-weight:600;color:var(--navy)">Candidate #{{i + 1}}</div>
-                <div class="text-sm text-muted">Applied {{app.appliedAt | date:'dd MMM yyyy'}}</div>
+                <!-- ── Candidate name + email (NEW) ── -->
+                <div style="font-size:15px;font-weight:700;color:var(--navy)">
+                  {{ candidateByAppId[app.applicationId]?.fullName || ('Candidate #' + (i + 1)) }}
+                </div>
+                <div style="font-size:13px;color:var(--teal-dim);font-weight:500;margin-top:2px"
+                     *ngIf="candidateByAppId[app.applicationId]?.email">
+                  ✉ {{ candidateByAppId[app.applicationId].email }}
+                </div>
+                <div class="text-sm text-muted" style="margin-top:2px">Applied {{app.appliedAt | date:'dd MMM yyyy'}}</div>
               </div>
               <span class="badge" [class]="statusClass(app.status)">{{statusLabel(app.status)}}</span>
             </div>
 
+            <!-- candidate extra info -->
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"
+                 *ngIf="candidateByAppId[app.applicationId]">
+              <span class="badge badge-gray" style="font-size:11px"
+                    *ngIf="candidateByAppId[app.applicationId]?.mobile">
+                📞 {{ candidateByAppId[app.applicationId].mobile }}
+              </span>
+              <span class="badge badge-gray" style="font-size:11px"
+                    *ngIf="candidateByAppId[app.applicationId]?.experience != null">
+                {{ candidateByAppId[app.applicationId].experience }} yr exp
+              </span>
+            </div>
+
             <div class="mb-16" *ngIf="app.applicationId">
-              <span class="badge badge-gray" style="font-size:11px">
+              <span class="badge" style="font-size:11px" [class]="interviewStatusClass(app.applicationId)">
                 Interview: {{interviewStatusLabel(app.applicationId)}}
               </span>
             </div>
@@ -70,10 +91,11 @@
                 style="color:var(--teal-dim);border-color:var(--teal)">
                 Make Offer ✓
               </button>
-              <span class="text-sm text-muted" *ngIf="!canOffer(app) && app.status !== 'OFFERED' && app.status !== 'REJECTED'">
-                Waiting for candidate confirmation
+              <span class="text-sm text-muted"
+                *ngIf="!canOffer(app) && app.status === 'INTERVIEW_SCHEDULED'">
+                Waiting for candidate to confirm
               </span>
-              <button class="btn btn-danger btn-sm" (click)="updateStatus(app, 'REJECTED')"
+              <button class="btn btn-danger btn-sm" (click)="rejectCandidate(app)"
                 *ngIf="app.status !== 'REJECTED' && app.status !== 'OFFERED' && app.status !== 'WITHDRAWN'"
                 [disabled]="updatingId === app.applicationId">
                 Reject
@@ -91,6 +113,7 @@
   </div>
 </div>
 
+<!-- Schedule Modal -->
 <div class="modal-overlay" *ngIf="showScheduleModal">
   <div class="modal">
     <div class="modal-header">

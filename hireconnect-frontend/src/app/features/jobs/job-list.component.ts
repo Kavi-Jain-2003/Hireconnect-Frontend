@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { finalize, timeout } from 'rxjs/operators';
 import { JobService } from '../../core/services/job.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Job } from '../../core/models';
@@ -14,31 +15,60 @@ export class JobListComponent implements OnInit {
   searchLocation = '';
   selectedCategory = '';
   selectedType = '';
+  loadError = '';
   categories = ['IT', 'Finance', 'Marketing', 'HR', 'Sales', 'Operations', 'Design', 'Engineering'];
   types = ['Full-time', 'Part-time', 'Contract', 'Internship', 'Remote'];
 
   constructor(private jobService: JobService, public auth: AuthService, private router: Router) {}
 
   ngOnInit() {
-    this.jobService.getAllJobs().subscribe({
-      next: jobs => { this.allJobs = jobs; this.filteredJobs = jobs; this.loading = false; },
-      error: () => { this.loading = false; }
+    this.loadJobs();
+  }
+
+  loadJobs() {
+    this.loading = true;
+    this.loadError = '';
+
+    this.jobService.getAllJobs().pipe(
+      timeout(15000),
+      finalize(() => { this.loading = false; })
+    ).subscribe({
+      next: jobs => {
+        this.allJobs = jobs || [];
+        this.applyFilters();
+      },
+      error: err => {
+        this.allJobs = [];
+        this.filteredJobs = [];
+        this.loadError = err?.name === 'TimeoutError'
+          ? 'Loading jobs took too long. Please try again.'
+          : 'Failed to load jobs. Please try again.';
+      }
     });
   }
 
-  filter() {
+  applyFilters() {
+    const title = (this.searchTitle || '').trim().toLowerCase();
+    const location = (this.searchLocation || '').trim().toLowerCase();
+    const category = (this.selectedCategory || '').trim();
+    const type = (this.selectedType || '').trim();
+
     this.filteredJobs = this.allJobs.filter(j =>
-      (!this.searchTitle || j.title.toLowerCase().includes(this.searchTitle.toLowerCase()) || j.company.toLowerCase().includes(this.searchTitle.toLowerCase())) &&
-      (!this.searchLocation || j.location.toLowerCase().includes(this.searchLocation.toLowerCase())) &&
-      (!this.selectedCategory || j.category === this.selectedCategory) &&
-      (!this.selectedType || j.type === this.selectedType)
+      (!title || j.title.toLowerCase().includes(title) || j.company.toLowerCase().includes(title)) &&
+      (!location || j.location.toLowerCase().includes(location)) &&
+      (!category || j.category === category) &&
+      (!type || j.type === type)
     );
+  }
+
+  filter() {
+    this.applyFilters();
   }
 
   clearFilters() {
     this.searchTitle = ''; this.searchLocation = '';
     this.selectedCategory = ''; this.selectedType = '';
-    this.filteredJobs = this.allJobs;
+    this.applyFilters();
   }
 
   formatSalary(min: number, max: number): string {

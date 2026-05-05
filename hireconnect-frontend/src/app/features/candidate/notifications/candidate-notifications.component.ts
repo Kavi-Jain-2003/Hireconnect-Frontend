@@ -15,6 +15,11 @@ export class CandidateNotificationsComponent implements OnInit {
 
   constructor(private notifSvc: NotificationService) {}
 
+  private isRead(item: Notification): boolean {
+    return Boolean((item as unknown as { isRead?: boolean; read?: boolean }).isRead ??
+      (item as unknown as { isRead?: boolean; read?: boolean }).read);
+  }
+
   ngOnInit() {
     this.load();
   }
@@ -25,10 +30,11 @@ export class CandidateNotificationsComponent implements OnInit {
       next: n => {
         const unique = new Map<string, Notification>();
         n.forEach(item => {
-          const key = `${item.type}|${item.message}`;
+          const normalized = { ...item, isRead: this.isRead(item) } as Notification;
+          const key = `${normalized.type}|${normalized.message}`;
           const current = unique.get(key);
-          if (!current || new Date(item.createdAt).getTime() > new Date(current.createdAt).getTime()) {
-            unique.set(key, item);
+          if (!current || new Date(normalized.createdAt).getTime() > new Date(current.createdAt).getTime()) {
+            unique.set(key, normalized);
           }
         });
         this.notifications = Array.from(unique.values())

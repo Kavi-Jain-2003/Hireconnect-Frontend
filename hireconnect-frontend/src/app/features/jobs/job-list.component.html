@@ -30,12 +30,12 @@
           <input [(ngModel)]="searchLocation" (ngModelChange)="filter()" placeholder="Location..." />
         </div>
         <select class="form-control" style="width:160px" [(ngModel)]="selectedCategory" (ngModelChange)="filter()">
-          <option value="">All Categories</option>
-          <option *ngFor="let c of categories">{{c}}</option>
+          <option [ngValue]="''">All Categories</option>
+          <option *ngFor="let c of categories" [ngValue]="c">{{c}}</option>
         </select>
         <select class="form-control" style="width:150px" [(ngModel)]="selectedType" (ngModelChange)="filter()">
-          <option value="">All Types</option>
-          <option *ngFor="let t of types">{{t}}</option>
+          <option [ngValue]="''">All Types</option>
+          <option *ngFor="let t of types" [ngValue]="t">{{t}}</option>
         </select>
         <button class="btn btn-ghost btn-sm" (click)="clearFilters()" *ngIf="searchTitle || searchLocation || selectedCategory || selectedType">Clear</button>
       </div>
@@ -46,15 +46,25 @@
     <div class="loading-wrapper" *ngIf="loading">
       <div class="spinner"></div>
       <span>Loading jobs...</span>
+      <button class="btn btn-ghost btn-sm" style="margin-left:12px" (click)="loadJobs()">Refresh</button>
     </div>
 
-    <div class="empty-state" *ngIf="!loading && filteredJobs.length === 0">
+    <div class="empty-state" *ngIf="!loading && loadError">
+      <div class="empty-icon">!</div>
+      <div class="empty-title">Could not load jobs</div>
+      <div class="empty-text">
+        {{ loadError }}
+        <button class="btn btn-ghost btn-sm" style="margin-left:10px" (click)="loadJobs()">Retry</button>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && !loadError && filteredJobs.length === 0">
       <div class="empty-icon">🔍</div>
       <div class="empty-title">No jobs found</div>
       <div class="empty-text">Try adjusting your filters or <button class="btn btn-ghost btn-sm" (click)="clearFilters()">clear all filters</button></div>
     </div>
 
-    <div class="jobs-grid" *ngIf="!loading && filteredJobs.length > 0">
+    <div class="jobs-grid" *ngIf="!loading && !loadError && filteredJobs.length > 0">
       <div class="job-card" *ngFor="let job of filteredJobs" [routerLink]="['/jobs', job.jobId]">
         <div class="flex justify-between items-center" style="margin-bottom: 16px;">
           <div>

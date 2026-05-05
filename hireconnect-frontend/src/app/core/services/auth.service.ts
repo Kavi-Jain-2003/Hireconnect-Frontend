@@ -30,10 +30,9 @@ export class AuthService {
     return this.http.post<ApiResponse>(`${this.base}/register`, {
       email: req.email,
       password: req.password,
-      role: req.role   // CANDIDATE or RECRUITER — enum string, Jackson deserializes it fine
+      role: req.role
     }).pipe(
       catchError(err => {
-        // Backend throws RuntimeException → Spring returns 500 with message in body
         const msg = err.error?.message || err.error?.error || err.message || 'Registration failed';
         return throwError(() => ({ error: { message: msg } }));
       })
@@ -60,7 +59,6 @@ export class AuthService {
     );
   }
 
-  // Called after GitHub OAuth redirects back with token in URL
   loginWithToken(token: string, email: string, role: string): void {
     localStorage.setItem('hc_token', token);
     const payload = this.decodeJwtPayload(token);
@@ -84,14 +82,15 @@ export class AuthService {
     if (!token) return null;
     return (this.decodeJwtPayload(token)?.['sub'] as string | undefined) || null;
   }
-  getRole():  string | null  {
+  getRole(): string | null {
     const role = this.normalizeRole(localStorage.getItem('hc_role'));
     if (role) return role;
     const token = this.getToken();
     if (!token) return null;
     return this.normalizeRole(this.decodeJwtPayload(token)?.['role'] as string | undefined);
   }
-  isLoggedIn(): boolean      { return !!this.getToken(); }
-  isCandidate(): boolean     { return this.getRole() === 'CANDIDATE'; }
-  isRecruiter(): boolean     { return this.getRole() === 'RECRUITER'; }
+  isLoggedIn(): boolean  { return !!this.getToken(); }
+  isCandidate(): boolean { return this.getRole() === 'CANDIDATE'; }
+  isRecruiter(): boolean { return this.getRole() === 'RECRUITER'; }
+  isAdmin(): boolean     { return this.getRole() === 'ADMIN'; }       // ← ADDED
 }

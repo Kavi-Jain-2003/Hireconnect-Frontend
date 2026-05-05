@@ -14,6 +14,11 @@ const routes: Routes = [
     path: 'recruiter', canActivate: [AuthGuard], data: { roles: ['RECRUITER'] },
     loadChildren: () => import('./features/recruiter/recruiter.module').then(m => m.RecruiterModule)
   },
+  // ── ADMIN ROUTE ──────────────────────────────────────────────
+  {
+    path: 'admin', canActivate: [AuthGuard], data: { roles: ['ADMIN'] },
+    loadChildren: () => import('./features/admin/admin.module').then(m => m.AdminModule)
+  },
   { path: '**', redirectTo: '' }
 ];
 

@@ -60,6 +60,7 @@ export interface ApplicationRequest {
 // ── Profiles ──────────────────────────────────────────
 export interface CandidateProfile {
   profileId: number;
+  userId?: number;
   fullName: string;
   email: string;
   mobile: string;

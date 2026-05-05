@@ -41,6 +41,10 @@ export class ApplicationService {
     return this.http.put<ApiResponse>(`${this.base}/${id}/status`, { status });
   }
 
+  finalizeStatus(id: number, status: string): Observable<ApiResponse> {
+    return this.http.put<ApiResponse>(`${this.base}/${id}/final-status`, { status });
+  }
+
   // DELETE /applications/{id}
   withdraw(id: number): Observable<ApiResponse> {
     return this.http.delete<ApiResponse>(`${this.base}/${id}`);

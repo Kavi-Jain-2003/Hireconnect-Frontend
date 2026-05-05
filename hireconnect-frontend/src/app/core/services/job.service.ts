@@ -6,7 +6,7 @@ import { Job, JobRequest, ApiResponse } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class JobService {
-  private base = '/jobs';
+  private base = '/api/jobs';
   constructor(private http: HttpClient) {}
 
   // Public endpoints (no auth needed)

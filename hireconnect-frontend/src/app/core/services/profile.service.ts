@@ -23,7 +23,7 @@ export class ProfileService {
   // GET /profiles/public/candidate/email/{email}
   getCandidateByEmail(email: string): Observable<CandidateProfile> {
     return this.http.get<ApiResponse<CandidateProfile>>(
-      `${this.base}/public/candidate/email/${encodeURIComponent(email)}`
+      `${this.base}/public/candidate/email?email=${encodeURIComponent(email)}`
     ).pipe(map(r => r.data));
   }
 
@@ -48,7 +48,7 @@ export class ProfileService {
   // GET /profiles/public/recruiter/email/{email}
   getRecruiterByEmail(email: string): Observable<RecruiterProfile> {
     return this.http.get<ApiResponse<RecruiterProfile>>(
-      `${this.base}/public/recruiter/email/${encodeURIComponent(email)}`
+      `${this.base}/public/recruiter/email?email=${encodeURIComponent(email)}`
     ).pipe(map(r => r.data));
   }
 
