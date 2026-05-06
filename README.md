@@ -73,44 +73,14 @@ Analytics Service
 </ol>
 
 
-⚙️ Setup & Installation
-1️⃣ Clone the repository
-git clone https://github.com/your-username/hireconnect-frontend.gitcd hireconnect-frontend
-2️⃣ Install dependencies
-npm install
-3️⃣ Configure environment
-Update API base URL in:
-src/environments/environment.ts
-Example:
-export const environment = {  production: false,  apiUrl: 'http://localhost:8080/api'};
-4️⃣ Run the application
-ng serve
-or (React):
-npm start
-App will run on:
-http://localhost:4200
-
-📸 Key Pages
-
-
-Home Page (Job Listings)
-
-
-Login / Register
-
-
-Candidate Dashboard
-
-
-Recruiter Dashboard
-
-
-Job Details Page
-
-
-Application Tracking Page
-
-
-Interview Management Page
+<h1>📸 Key Pages</h1>
+<ul>
+<li>Home Page (Job Listings)</li>
+<li>Login / Register</li>
+<li>Candidate Dashboard</li>
+<li>Recruiter Dashboard</li>
+<li>Job Details Page</li>
+<li>Application Tracking Page</li>
+<li>Interview Management Page</li>
 
 
