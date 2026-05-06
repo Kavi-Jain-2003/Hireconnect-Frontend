@@ -14,6 +14,7 @@ The frontend enables users to:
 <li>Handle interviews</li>
 <li>Manage recruiter dashboards</li>
 </ul>
+
 <h1>🧑‍💻 Tech Stack</h1>
 <ul>
  <li>Framework: Angular / React (whichever you used — update accordingly)</li>
@@ -28,154 +29,48 @@ src/│── app/│   ├── components/│   ├── pages/│   ├─�
 ```
 
 <h1>🔑 Features</h1>
-👤 Candidate Features
-
-
+<ol>
+ <li>👤 Candidate Features:</li>
 Register & Login
-
-
 Create and update profile
-
-
 Upload resume
-
-
 Search jobs with filters (location, salary, skills)
-
-
 Apply for jobs
-
-
-Track application status:
-
-
-Applied
-
-
-Shortlisted
-
-
-Interview Scheduled
-
-
-Offered / Rejected
-
-
-
-
+Track application status: Applied, Shortlisted, Interview Scheduled, Offered / Rejected
 View interview schedules
-
-
 Receive notifications
 
-
-
-🧑‍💼 Recruiter Features
-
-
+<li>🧑‍💼 Recruiter Features:</li>
 Register & Login
-
-
 Create company profile
-
-
 Post new jobs
-
-
 Edit / Delete job listings
-
-
 View applications
-
-
 Shortlist / Reject candidates
-
-
 Schedule interviews
-
-
 View analytics dashboard
 
-
-
-🔔 Notification System
-
-
+<li>🔔 Notification System:</li>
 In-app notifications
+Real-time updates for: Application status, Interview scheduling, Job alerts
 
-
-Email notifications (via backend integration)
-
-
-Real-time updates for:
-
-
-Application status
-
-
-Interview scheduling
-
-
-Job alerts
-
-
-
-
-
-🔐 Authentication & Security
-
-
+<li>🔐 Authentication & Security:</li>
 JWT-based authentication
-
-
-Role-based access control:
-
-
-Candidate
-
-
-Recruiter
-
-
-Admin
-
-
-
-
+Role-based access control: Candidate, Recruiter, Admin
 Protected routes using guards
-
-
 HTTP interceptors for token handling
 
-
-
-🔌 API Integration
+<li>🔌 API Integration:</li>
 Frontend communicates with backend microservices:
-
-
 Auth Service
-
-
 Profile Service
-
-
 Job Service
-
-
 Application Service
-
-
 Interview Service
-
-
 Notification Service
-
-
 Subscription Service
-
-
 Analytics Service
-
+</ol>
 
 
 ⚙️ Setup & Installation
