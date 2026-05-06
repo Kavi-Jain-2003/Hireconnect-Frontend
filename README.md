@@ -1,54 +1,33 @@
-💼 HireConnect Frontend
+<h1>💼 HireConnect Frontend</h1>
+
 Frontend for HireConnect – Job Portal with Recruiter & Candidate Dashboard
 This application provides a modern UI for job seekers and recruiters to interact with the platform seamlessly.
 
-🚀 Overview
+<h1>🚀 Overview</h1>
 HireConnect is a full-featured job portal that connects candidates and recruiters through an intuitive web interface.
 The frontend enables users to:
+<ul>
+<li>Browse and search jobs</li>
+<li>Apply for jobs</li>
+<li>Manage profiles</li>
+<li>Track application status</li>
+<li>Handle interviews</li>
+<li>Manage recruiter dashboards</li>
+</ul>
+<h1>🧑‍💻 Tech Stack</h1>
+<ul>
+ <li>Framework: Angular / React (whichever you used — update accordingly)</li>
+<li>Styling: CSS / Bootstrap / Tailwind</li>
+<li>API Communication: REST APIs (Spring Boot backend)</li>
+<li>Authentication: JWT-based authentication</li>
+</ul>
 
-
-Browse and search jobs
-
-
-Apply for jobs
-
-
-Manage profiles
-
-
-Track application status
-
-
-Handle interviews
-
-
-Manage recruiter dashboards
-
-
-
-🧑‍💻 Tech Stack
-
-
-Framework: Angular / React (whichever you used — update accordingly)
-
-
-Styling: CSS / Bootstrap / Tailwind
-
-
-API Communication: REST APIs (Spring Boot backend)
-
-
-Authentication: JWT-based authentication
-
-
-State Management: (Redux / NgRx / Context API – if used)
-
-
-
+```
 📁 Project Structure
 src/│── app/│   ├── components/│   ├── pages/│   ├── services/│   ├── models/│   ├── guards/│   ├── interceptors/│   └── utils/││── assets/│── environments/│── index.html
+```
 
-🔑 Features
+<h1>🔑 Features</h1>
 👤 Candidate Features
 
 
