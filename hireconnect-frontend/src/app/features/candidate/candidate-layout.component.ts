@@ -72,7 +72,9 @@ export class CandidateLayoutComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadUnread();
-    this.timer = setInterval(() => this.loadUnread(), 30000); // poll every 30s
+    // Poll every 20 s — notifications now arrive via RabbitMQ + SMTP so they
+    // appear quickly; frequent polling keeps the bell count in sync.
+    this.timer = setInterval(() => this.loadUnread(), 20000);
   }
 
   ngOnDestroy() { clearInterval(this.timer); }
@@ -81,5 +83,6 @@ export class CandidateLayoutComponent implements OnInit, OnDestroy {
     this.notifSvc.getUnreadCount().subscribe({ next: c => { this.unreadCount = c; }, error: () => {} });
   }
 
-  logout() { this.auth.logout(); this.router.navigate(['/']); }
+  // auth.logout() now calls POST /auth/logout (Redis blacklist) then navigates to /
+  logout() { this.auth.logout(); }
 }

@@ -1,14 +1,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { tap, map, catchError } from 'rxjs/operators';
-import { throwError } from 'rxjs';
 import { LoginRequest, RegisterRequest, LoginResponse, ApiResponse } from '../models';
+import { Router } from '@angular/router';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private base = '/auth';
-  constructor(private http: HttpClient) {}
+
+  constructor(private http: HttpClient, private router: Router) {}
 
   private normalizeRole(role: string | null | undefined): string {
     if (!role) return '';
@@ -68,20 +69,44 @@ export class AuthService {
     localStorage.setItem('hc_role', this.normalizeRole(resolvedRole));
   }
 
+  /**
+   * Calls POST /auth/logout so the backend can blacklist the JWT in Redis.
+   * The token is sent explicitly, so logout still works even if storage is cleared
+   * immediately after the request is created.
+   */
   logout(): void {
+    const token = this.getToken();
+    if (token) {
+      this.http.post(
+        `${this.base}/logout`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      ).subscribe({ error: () => {} });
+    }
+
+    this.clearSession();
+    this.router.navigate(['/']);
+  }
+
+  /** Clears all local session data (called by logout and by the 401 interceptor). */
+  clearSession(): void {
     localStorage.removeItem('hc_token');
     localStorage.removeItem('hc_email');
     localStorage.removeItem('hc_role');
   }
 
-  getToken(): string | null  { return localStorage.getItem('hc_token'); }
-  getEmail(): string | null  {
+  getToken(): string | null {
+    return localStorage.getItem('hc_token');
+  }
+
+  getEmail(): string | null {
     const email = localStorage.getItem('hc_email');
     if (email) return email;
     const token = this.getToken();
     if (!token) return null;
     return (this.decodeJwtPayload(token)?.['sub'] as string | undefined) || null;
   }
+
   getRole(): string | null {
     const role = this.normalizeRole(localStorage.getItem('hc_role'));
     if (role) return role;
@@ -89,8 +114,20 @@ export class AuthService {
     if (!token) return null;
     return this.normalizeRole(this.decodeJwtPayload(token)?.['role'] as string | undefined);
   }
-  isLoggedIn(): boolean  { return !!this.getToken(); }
-  isCandidate(): boolean { return this.getRole() === 'CANDIDATE'; }
-  isRecruiter(): boolean { return this.getRole() === 'RECRUITER'; }
-  isAdmin(): boolean     { return this.getRole() === 'ADMIN'; }       // ← ADDED
+
+  isLoggedIn(): boolean {
+    return !!this.getToken();
+  }
+
+  isCandidate(): boolean {
+    return this.getRole() === 'CANDIDATE';
+  }
+
+  isRecruiter(): boolean {
+    return this.getRole() === 'RECRUITER';
+  }
+
+  isAdmin(): boolean {
+    return this.getRole() === 'ADMIN';
+  }
 }

@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { NotificationService } from '../../core/services/interview-notification.service';
 
 @Component({
   standalone: false,
@@ -13,6 +14,9 @@ import { AuthService } from '../../core/services/auth.service';
     <div class="navbar-actions">
       <span style="font-size:14px;color:var(--text-muted)">{{auth.getEmail()}}</span>
       <span class="badge badge-amber">Recruiter</span>
+      <a class="notif-bell" routerLink="/recruiter/notifications">
+        🔔 <span class="notif-count" *ngIf="unreadCount > 0">{{unreadCount}}</span>
+      </a>
       <button class="btn btn-ghost btn-sm" (click)="logout()">Sign Out</button>
     </div>
   </nav>
@@ -36,6 +40,11 @@ import { AuthService } from '../../core/services/auth.service';
           <span class="nav-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span>
           Analytics
         </a>
+        <a class="nav-item" routerLink="/recruiter/notifications" routerLinkActive="active">
+          <span class="nav-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg></span>
+          Notifications
+          <span style="background:var(--rose);color:white;font-size:11px;padding:1px 7px;border-radius:999px;margin-left:auto" *ngIf="unreadCount > 0">{{unreadCount}}</span>
+        </a>
       </div>
       <div class="nav-section">
         <span class="nav-label">Account</span>
@@ -54,9 +63,29 @@ import { AuthService } from '../../core/services/auth.service';
     </main>
   </div>
 </div>`,
-  styles: []
+  styles: [`
+    .notif-bell { position:relative; font-size:20px; cursor:pointer; text-decoration:none; }
+    .notif-count { position:absolute; top:-6px; right:-8px; background:var(--rose); color:white; font-size:10px; font-weight:700; padding:1px 5px; border-radius:999px; font-family:'DM Sans',sans-serif; }
+  `]
 })
-export class RecruiterLayoutComponent {
-  constructor(public auth: AuthService, private router: Router) {}
-  logout() { this.auth.logout(); this.router.navigate(['/']); }
+export class RecruiterLayoutComponent implements OnInit, OnDestroy {
+  unreadCount = 0;
+  private timer: any;
+
+  constructor(public auth: AuthService, private router: Router, private notifSvc: NotificationService) {}
+
+  ngOnInit() {
+    this.loadUnread();
+    // Poll every 20 s to reflect RabbitMQ-driven notifications promptly
+    this.timer = setInterval(() => this.loadUnread(), 20000);
+  }
+
+  ngOnDestroy() { clearInterval(this.timer); }
+
+  loadUnread() {
+    this.notifSvc.getUnreadCount().subscribe({ next: c => { this.unreadCount = c; }, error: () => {} });
+  }
+
+  // auth.logout() calls POST /auth/logout (Redis blacklist) then navigates to /
+  logout() { this.auth.logout(); }
 }

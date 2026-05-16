@@ -70,6 +70,7 @@
           <div>
             <div class="job-title">{{job.title}}</div>
             <div class="job-company">{{job.company}}</div>
+            <div class="job-recruiter" style="font-size:12px; color:var(--text-muted); margin-top:2px;">👤 {{job.postedBy}}</div>
           </div>
           <span class="badge" [class]="job.status === 'OPEN' ? 'badge-teal' : 'badge-gray'">{{job.status}}</span>
         </div>

@@ -29,9 +29,9 @@
         <td>
           <div style="display:flex;gap:6px">
             <button class="btn btn-ghost btn-sm" (click)="openEdit(job)">Edit</button>
-            <button class="btn btn-ghost btn-sm" (click)="toggleStatus(job, 'pause')" *ngIf="job.status === 'OPEN'">Pause</button>
-            <button class="btn btn-ghost btn-sm" (click)="toggleStatus(job, 'close')" *ngIf="job.status !== 'CLOSED'">Close</button>
-            <button class="btn btn-danger btn-sm" (click)="delete(job.jobId)">Delete</button>
+            <button class="btn btn-ghost btn-sm" (click)="changeStatus(job, 'pause')" *ngIf="job.status === 'OPEN'">Pause</button>
+            <button class="btn btn-ghost btn-sm" (click)="changeStatus(job, 'close')" *ngIf="job.status !== 'CLOSED'">Close</button>
+            <button class="btn btn-danger btn-sm" (click)="deleteJob(job.jobId)">Delete</button>
           </div>
         </td>
       </tr>

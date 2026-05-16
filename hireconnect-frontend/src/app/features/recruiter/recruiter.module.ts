@@ -9,6 +9,7 @@ import { RecruiterApplicationsComponent } from './applications/recruiter-applica
 import { RecruiterProfileComponent } from './profile/recruiter-profile.component';
 import { RecruiterAnalyticsComponent } from './analytics/recruiter-analytics.component';
 import { RecruiterSubscriptionComponent } from './subscription/recruiter-subscription.component';
+import { RecruiterNotificationsComponent } from './notifications/recruiter-notifications.component';
 
 const routes: Routes = [
   {
@@ -20,6 +21,7 @@ const routes: Routes = [
       { path: 'profile', component: RecruiterProfileComponent },
       { path: 'analytics', component: RecruiterAnalyticsComponent },
       { path: 'subscription', component: RecruiterSubscriptionComponent },
+      { path: 'notifications', component: RecruiterNotificationsComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }
@@ -29,7 +31,8 @@ const routes: Routes = [
   declarations: [
     RecruiterLayoutComponent, RecruiterDashboardComponent, RecruiterJobsComponent,
     RecruiterApplicationsComponent, RecruiterProfileComponent,
-    RecruiterAnalyticsComponent, RecruiterSubscriptionComponent
+    RecruiterAnalyticsComponent, RecruiterSubscriptionComponent,
+    RecruiterNotificationsComponent
   ],
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule.forChild(routes)]
 })
