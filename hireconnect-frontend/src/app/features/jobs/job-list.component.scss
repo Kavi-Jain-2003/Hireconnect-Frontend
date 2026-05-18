@@ -1,0 +1,14 @@
+.jobs-page { min-height: 100vh; }
+.jobs-header {
+  background: var(--navy); padding: 48px 0 40px;
+  h1 { font-size: 36px; color: white; margin-bottom: 8px; }
+  p { font-size: 15px; color: rgba(255,255,255,0.5); margin-bottom: 28px; }
+}
+.filters-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.filters-row .form-control { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: white; }
+.filters-row .form-control option { background: var(--navy); }
+.filters-row .search-bar { background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.15); }
+.filters-row .search-bar input { color: white; background: transparent; }
+.filters-row .search-bar input::placeholder { color: rgba(255,255,255,0.5); }
+.jobs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px; }
+@media (max-width: 768px) { .jobs-grid { grid-template-columns: 1fr; } .filters-row { flex-direction: column; align-items: stretch; } }

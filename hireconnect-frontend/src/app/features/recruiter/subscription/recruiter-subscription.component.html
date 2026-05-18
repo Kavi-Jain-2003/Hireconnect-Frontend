@@ -1,0 +1,67 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Subscription & Billing</h1>
+    <p class="page-subtitle">Manage your recruitment plan</p>
+  </div>
+</div>
+
+<div class="alert" [class]="msgType() === 'success' ? 'alert-success' : 'alert-error'" *ngIf="msg()">{{msg()}}</div>
+
+<!-- Active subscription banner -->
+<div class="active-banner" *ngIf="active()">
+  <div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:.06em">Active Plan</div>
+    <div style="font-size:24px;font-weight:700;color:white;margin-top:4px">{{active().plan}}</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:4px">Valid until {{active().endDate | date:'dd MMM yyyy'}}</div>
+  </div>
+  <div style="display:flex;gap:10px">
+    <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:white" (click)="renew(active().subscriptionId)"
+      [disabled]="renewing() === active().subscriptionId">
+      <span *ngIf="renewing() === active().subscriptionId" class="spinner" style="width:13px;height:13px;border-width:2px"></span>
+      <span *ngIf="renewing() !== active().subscriptionId">Renew</span>
+    </button>
+    <button class="btn btn-sm" style="background:rgba(231,111,81,0.2);color:#FFBDB0;border:1px solid rgba(231,111,81,0.3)"
+      (click)="cancel(active().subscriptionId)" [disabled]="cancelling() === active().subscriptionId">
+      Cancel Plan
+    </button>
+  </div>
+</div>
+
+<div class="loading-wrapper" *ngIf="loading()"><div class="spinner"></div></div>
+
+<!-- Plan cards -->
+<div class="plans-grid mt-32" *ngIf="!loading()">
+  <div class="plan-card" *ngFor="let plan of plans" [class.active-plan]="isActive(plan.id)" [class.featured]="plan.id === 'PROFESSIONAL'">
+    <div class="plan-badge" *ngIf="plan.id === 'PROFESSIONAL'">Most Popular</div>
+    <div class="plan-name">{{plan.name}}</div>
+    <div class="plan-price">{{planPrice(plan.price)}}</div>
+    <div class="plan-posts">{{plan.posts === -1 ? 'Unlimited' : plan.posts + ''}} job posts/month</div>
+    <ul class="plan-features">
+      <li *ngFor="let f of plan.features">✓ {{f}}</li>
+    </ul>
+    <button class="btn w-full" style="justify-content:center;margin-top:auto"
+      [class]="isActive(plan.id) ? 'btn-ghost' : (plan.id === 'PROFESSIONAL' ? 'btn-teal' : 'btn-outline')"
+      [disabled]="subscribing() || isActive(plan.id)"
+      (click)="!isActive(plan.id) && subscribe(plan.id)">
+      <span *ngIf="subscribing()" class="spinner" style="width:14px;height:14px;border-width:2px"></span>
+      <span *ngIf="!subscribing()">{{isActive(plan.id) ? '✓ Current Plan' : (plan.price === 0 ? 'Start Free' : 'Subscribe')}}</span>
+    </button>
+  </div>
+</div>
+
+<!-- Invoice history -->
+<div class="card mt-32" *ngIf="subscriptions().length > 0">
+  <div class="card-header"><h3>Subscription History</h3></div>
+  <table class="data-table">
+    <thead><tr><th>Plan</th><th>Start Date</th><th>End Date</th><th>Amount</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr *ngFor="let s of subscriptions()">
+        <td style="font-weight:600">{{s.plan}}</td>
+        <td>{{s.startDate | date:'dd MMM yyyy'}}</td>
+        <td>{{s.endDate | date:'dd MMM yyyy'}}</td>
+        <td>{{s.amountPaid === 0 ? 'Free' : '₹' + s.amountPaid.toLocaleString()}}</td>
+        <td><span class="badge" [class]="s.status === 'ACTIVE' ? 'badge-teal' : 'badge-gray'">{{s.status}}</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>

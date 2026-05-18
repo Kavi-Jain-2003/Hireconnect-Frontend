@@ -1,0 +1,99 @@
+<div class="loading-wrapper" *ngIf="loading()"><div class="spinner"></div><span>Loading dashboard…</span></div>
+
+<ng-container *ngIf="!loading()">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Recruiter Dashboard</h1>
+      <p class="page-subtitle">{{profile()?.companyName || auth.getEmail()}} — Manage your hiring pipeline</p>
+    </div>
+    <a class="btn btn-teal" routerLink="/recruiter/jobs">+ Post New Job</a>
+  </div>
+
+  <!-- No profile warning -->
+  <div class="card mb-24" *ngIf="profileError()" style="border-color:var(--amber)">
+    <div class="card-body" style="display:flex;align-items:center;gap:20px">
+      <div style="font-size:36px">🏢</div>
+      <div style="flex:1">
+        <div style="font-size:17px;font-weight:600;color:var(--navy)">Set up your company profile</div>
+        <div class="text-sm text-muted" style="margin-top:4px">Add company details to attract top candidates</div>
+      </div>
+      <a class="btn btn-teal" routerLink="/recruiter/profile">Setup Profile →</a>
+    </div>
+  </div>
+
+  <div class="grid-4">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(13,27,42,0.07)">
+        <svg width="22" height="22" fill="none" stroke="var(--navy)" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+      </div>
+      <div class="stat-label">Total Postings</div>
+      <div class="stat-value">{{totalJobs()}}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(0,201,167,0.1)">
+        <svg width="22" height="22" fill="none" stroke="var(--teal)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <div class="stat-label">Open Jobs</div>
+      <div class="stat-value">{{openJobs()}}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(244,162,97,0.1)">
+        <svg width="22" height="22" fill="none" stroke="var(--amber)" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      </div>
+      <div class="stat-label">Total Applications</div>
+      <div class="stat-value">{{totalApps()}}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(231,111,81,0.1)">
+        <svg width="22" height="22" fill="none" stroke="var(--rose)" stroke-width="2" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      </div>
+      <div class="stat-label">Avg. per Job</div>
+      <div class="stat-value">{{totalJobs() > 0 ? (totalApps() / totalJobs() | number:'1.0-0') : 0}}</div>
+    </div>
+  </div>
+
+  <div class="card mt-32">
+    <div class="card-header">
+      <h3>Your Job Postings</h3>
+      <a class="btn btn-ghost btn-sm" routerLink="/recruiter/jobs">Manage all →</a>
+    </div>
+    <div class="empty-state" style="padding:48px" *ngIf="jobs().length === 0">
+      <div class="empty-icon">📋</div>
+      <div class="empty-title">No jobs posted yet</div>
+      <div class="empty-text" style="margin-top:16px">
+        <a class="btn btn-teal btn-sm" routerLink="/recruiter/jobs">Post your first job</a>
+      </div>
+    </div>
+    <table class="data-table" *ngIf="jobs().length > 0">
+      <thead><tr><th>Job Title</th><th>Category</th><th>Location</th><th>Status</th><th>Posted</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let job of jobs().slice(0,8)">
+          <td style="font-weight:600;color:var(--navy)">{{job.title}}</td>
+          <td>{{job.category}}</td>
+          <td>{{job.location}}</td>
+          <td><span class="badge" [class]="statusClass(job.status)">{{job.status | titlecase}}</span></td>
+          <td>{{job.postedAt | date:'dd MMM yyyy'}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Quick links -->
+  <div class="grid-3 mt-24">
+    <a class="quick-link" routerLink="/recruiter/applications">
+      <div class="quick-icon">👥</div>
+      <div class="quick-label">Review Applications</div>
+      <div class="quick-sub">Shortlist and manage candidates</div>
+    </a>
+    <a class="quick-link" routerLink="/recruiter/analytics">
+      <div class="quick-icon">📊</div>
+      <div class="quick-label">View Analytics</div>
+      <div class="quick-sub">Track hiring metrics & ratios</div>
+    </a>
+    <a class="quick-link" routerLink="/recruiter/subscription">
+      <div class="quick-icon">💳</div>
+      <div class="quick-label">Subscription</div>
+      <div class="quick-sub">Manage plan & billing</div>
+    </a>
+  </div>
+</ng-container>

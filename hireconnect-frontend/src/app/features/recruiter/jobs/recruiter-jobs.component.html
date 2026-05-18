@@ -1,0 +1,112 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Job Postings</h1>
+    <p class="page-subtitle">Manage and track all your job listings</p>
+  </div>
+  <button class="btn btn-teal" (click)="openNew()">+ Post New Job</button>
+</div>
+
+<div class="alert alert-success" *ngIf="msg() && !showModal()">{{msg()}}</div>
+<div class="loading-wrapper" *ngIf="loading()"><div class="spinner"></div></div>
+
+<div class="empty-state" *ngIf="!loading() && jobs().length === 0">
+  <div class="empty-icon">📋</div>
+  <div class="empty-title">No jobs posted yet</div>
+  <div class="empty-text">Click "Post New Job" to attract top talent</div>
+</div>
+
+<div class="table-wrapper" *ngIf="!loading() && jobs().length > 0">
+  <table class="data-table">
+    <thead><tr><th>Title</th><th>Category</th><th>Location</th><th>Type</th><th>Salary</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+      <tr *ngFor="let job of jobs()">
+        <td style="font-weight:600;color:var(--navy)">{{job.title}}</td>
+        <td>{{job.category}}</td>
+        <td>{{job.location}}</td>
+        <td>{{job.type}}</td>
+        <td>₹{{job.salaryMin | number}}–₹{{job.salaryMax | number}}</td>
+        <td><span class="badge" [class]="statusClass(job.status)">{{job.status}}</span></td>
+        <td>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" (click)="openEdit(job)">Edit</button>
+            <button class="btn btn-ghost btn-sm" (click)="changeStatus(job, 'pause')" *ngIf="job.status === 'OPEN'">Pause</button>
+            <button class="btn btn-ghost btn-sm" (click)="changeStatus(job, 'close')" *ngIf="job.status !== 'CLOSED'">Close</button>
+            <button class="btn btn-danger btn-sm" (click)="deleteJob(job.jobId)">Delete</button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Job Modal -->
+<div class="modal-overlay" *ngIf="showModal()">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <h3>{{editing() ? 'Edit Job' : 'Post New Job'}}</h3>
+      <button class="btn btn-ghost btn-sm" (click)="showModal.set(false)">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+      <form [formGroup]="form" style="display:flex;flex-direction:column;gap:18px">
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Job Title *</label>
+            <input class="form-control" formControlName="title" placeholder="e.g. Senior Java Developer">
+          </div>
+          <div class="form-group">
+            <label>Category *</label>
+            <select class="form-control" formControlName="category">
+              <option value="">Select</option>
+              <option *ngFor="let c of ['IT','Finance','Marketing','HR','Sales','Operations','Design','Engineering']">{{c}}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Job Type *</label>
+            <select class="form-control" formControlName="type">
+              <option>Full-time</option><option>Part-time</option><option>Contract</option><option>Internship</option><option>Remote</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Location *</label>
+            <input class="form-control" formControlName="location" placeholder="e.g. Bengaluru, Remote">
+          </div>
+          <div class="form-group">
+            <label>Salary Min (₹)</label>
+            <input class="form-control" type="number" formControlName="salaryMin">
+          </div>
+          <div class="form-group">
+            <label>Salary Max (₹)</label>
+            <input class="form-control" type="number" formControlName="salaryMax">
+          </div>
+          <div class="form-group">
+            <label>Experience Required (yrs)</label>
+            <input class="form-control" type="number" formControlName="experienceRequired" min="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea class="form-control" formControlName="description" rows="4" placeholder="Describe the role, responsibilities, and requirements..."></textarea>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em">Required Skills</label>
+          <div style="display:flex;gap:10px;margin-top:8px">
+            <input class="form-control" [ngModel]="skillInput()" (ngModelChange)="skillInput.set($event)" [ngModelOptions]="{standalone:true}" placeholder="e.g. Java, Spring Boot" (keydown.enter)="$event.preventDefault();addSkill()">
+            <button type="button" class="btn btn-outline btn-sm" (click)="addSkill()">Add</button>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
+            <span style="background:var(--cream-dark);padding:4px 10px;border-radius:999px;font-size:12px;display:flex;align-items:center;gap:6px" *ngFor="let s of skills()">
+              {{s}} <button type="button" style="background:none;border:none;cursor:pointer;color:var(--text-muted)" (click)="removeSkill(s)">×</button>
+            </span>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" (click)="showModal.set(false)">Cancel</button>
+      <button class="btn btn-teal" (click)="save()" [disabled]="saving() || form.invalid">
+        <span *ngIf="saving()" class="spinner" style="width:15px;height:15px;border-width:2px"></span>
+        <span *ngIf="!saving()">{{editing() ? 'Update Job' : 'Post Job'}}</span>
+      </button>
+    </div>
+  </div>
+</div>

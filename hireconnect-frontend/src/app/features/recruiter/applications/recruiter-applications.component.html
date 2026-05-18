@@ -1,0 +1,155 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Applications</h1>
+    <p class="page-subtitle">Review and manage candidate applications</p>
+  </div>
+</div>
+
+<div class="alert" [class]="msgType() === 'success' ? 'alert-success' : 'alert-error'" *ngIf="msg() && !showScheduleModal()">{{msg()}}</div>
+
+<div class="apps-layout">
+  <div class="card job-selector">
+    <div class="card-header" style="padding:16px 20px"><h3 style="font-size:15px">Select Job</h3></div>
+    <div *ngFor="let job of jobs()" class="job-select-item" [class.active]="selectedJobId() === job.jobId" (click)="selectJob(job.jobId)">
+      <div style="font-size:14px;font-weight:600;color:var(--navy)">{{job.title}}</div>
+      <div class="text-sm text-muted">{{job.location}}</div>
+      <span class="badge" style="margin-top:6px" [class]="job.status === 'OPEN' ? 'badge-teal' : 'badge-gray'">{{job.status}}</span>
+    </div>
+    <div class="empty-state" style="padding:32px" *ngIf="!loading() && jobs().length === 0">
+      <div class="empty-text text-muted">No jobs posted yet</div>
+    </div>
+  </div>
+
+  <div class="apps-panel">
+    <div class="loading-wrapper" *ngIf="loading() || appsLoading()"><div class="spinner"></div></div>
+
+    <div *ngIf="!loading() && !appsLoading()">
+      <div class="apps-panel-header" *ngIf="selectedJob()">
+        <h3>{{selectedJob().title}}</h3>
+        <span class="badge badge-navy">{{apps().length}} applicant{{apps().length !== 1 ? 's' : ''}}</span>
+      </div>
+
+      <div class="empty-state" *ngIf="apps().length === 0 && selectedJobId()">
+        <div class="empty-icon">👤</div>
+        <div class="empty-title">No applications yet</div>
+        <div class="empty-text">Candidates will appear here when they apply</div>
+      </div>
+
+      <div class="app-cards" *ngIf="apps().length > 0">
+        <div class="card app-card" *ngFor="let app of apps(); let i = index">
+          <div class="card-body">
+
+            <div class="flex justify-between items-center mb-16">
+              <div>
+                <!-- ── Candidate name + email (NEW) ── -->
+                <div style="font-size:15px;font-weight:700;color:var(--navy)">
+                  {{ candidateByAppId()[app.applicationId]?.fullName || ('Candidate #' + (i + 1)) }}
+                </div>
+                <div style="font-size:13px;color:var(--teal-dim);font-weight:500;margin-top:2px"
+                     *ngIf="candidateByAppId()[app.applicationId]?.email">
+                  ✉ {{ candidateByAppId()[app.applicationId].email }}
+                </div>
+                <div class="text-sm text-muted" style="margin-top:2px">Applied {{app.appliedAt | date:'dd MMM yyyy'}}</div>
+              </div>
+              <span class="badge" [class]="statusClass(app.status)">{{statusLabel(app.status)}}</span>
+            </div>
+
+            <!-- candidate extra info -->
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"
+                 *ngIf="candidateByAppId()[app.applicationId]">
+              <span class="badge badge-gray" style="font-size:11px"
+                    *ngIf="candidateByAppId()[app.applicationId]?.mobile">
+                📞 {{ candidateByAppId()[app.applicationId].mobile }}
+              </span>
+              <span class="badge badge-gray" style="font-size:11px"
+                    *ngIf="candidateByAppId()[app.applicationId]?.experience != null">
+                {{ candidateByAppId()[app.applicationId].experience }} yr exp
+              </span>
+            </div>
+
+            <div class="mb-16" *ngIf="app.applicationId">
+              <span class="badge" style="font-size:11px" [class]="interviewStatusClass(app.applicationId)">
+                Interview: {{interviewStatusLabel(app.applicationId)}}
+              </span>
+            </div>
+
+            <div *ngIf="app.coverLetter" style="background:var(--cream);border-radius:8px;padding:12px;font-size:13px;color:var(--text-secondary);margin-bottom:16px;line-height:1.6;border-left:3px solid var(--border)">
+              "{{app.coverLetter | slice:0:200}}{{app.coverLetter.length > 200 ? '…' : ''}}"
+            </div>
+
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <button class="btn btn-teal btn-sm" (click)="updateStatus(app, 'SHORTLISTED')"
+                *ngIf="app.status === 'APPLIED'" [disabled]="updatingId() === app.applicationId">
+                Shortlist
+              </button>
+              <button class="btn btn-primary btn-sm" (click)="openSchedule(app.applicationId)"
+                *ngIf="app.status === 'SHORTLISTED'">
+                Schedule Interview
+              </button>
+              <button class="btn btn-outline btn-sm" (click)="offerCandidate(app)"
+                *ngIf="canOffer(app) && app.status !== 'OFFERED'" [disabled]="updatingId() === app.applicationId"
+                style="color:var(--teal-dim);border-color:var(--teal)">
+                Make Offer ✓
+              </button>
+              <span class="text-sm text-muted"
+                *ngIf="!canOffer(app) && app.status === 'INTERVIEW_SCHEDULED'">
+                Waiting for candidate to confirm
+              </span>
+              <button class="btn btn-danger btn-sm" (click)="rejectCandidate(app)"
+                *ngIf="app.status !== 'REJECTED' && app.status !== 'OFFERED' && app.status !== 'WITHDRAWN'"
+                [disabled]="updatingId() === app.applicationId">
+                Reject
+              </button>
+              <span *ngIf="updatingId() === app.applicationId" class="spinner" style="width:16px;height:16px;border-width:2px"></span>
+              <a *ngIf="app.resumeUrl && app.resumeUrl !== 'resume.link'"
+                [href]="app.resumeUrl" target="_blank" class="btn btn-ghost btn-sm">
+                View Resume ↗
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Schedule Modal -->
+<div class="modal-overlay" *ngIf="showScheduleModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Schedule Interview</h3>
+      <button class="btn btn-ghost btn-sm" (click)="showScheduleModal.set(false)">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:16px">
+      <div class="form-group">
+        <label>Date & Time *</label>
+        <input class="form-control" type="datetime-local" [ngModel]="scheduleForm().scheduledAt" (ngModelChange)="scheduleForm.set({ ...scheduleForm(), scheduledAt: $event })">
+      </div>
+      <div class="form-group">
+        <label>Mode</label>
+        <select class="form-control" [ngModel]="scheduleForm().mode" (ngModelChange)="scheduleForm.set({ ...scheduleForm(), mode: $event })">
+          <option>Online</option><option>In-Person</option>
+        </select>
+      </div>
+      <div class="form-group" *ngIf="scheduleForm().mode === 'Online'">
+        <label>Meeting Link</label>
+        <input class="form-control" [ngModel]="scheduleForm().meetLink" (ngModelChange)="scheduleForm.set({ ...scheduleForm(), meetLink: $event })" placeholder="https://meet.google.com/...">
+      </div>
+      <div class="form-group" *ngIf="scheduleForm().mode === 'In-Person'">
+        <label>Office Location</label>
+        <input class="form-control" [ngModel]="scheduleForm().location" (ngModelChange)="scheduleForm.set({ ...scheduleForm(), location: $event })" placeholder="Office address">
+      </div>
+      <div class="form-group">
+        <label>Notes for Candidate</label>
+        <textarea class="form-control" [ngModel]="scheduleForm().notes" (ngModelChange)="scheduleForm.set({ ...scheduleForm(), notes: $event })" rows="3" placeholder="e.g. Bring resume, wear business casual…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" (click)="showScheduleModal.set(false)">Cancel</button>
+      <button class="btn btn-teal" (click)="scheduleInterview()" [disabled]="scheduling() || !scheduleForm().scheduledAt">
+        <span *ngIf="scheduling()" class="spinner" style="width:15px;height:15px;border-width:2px"></span>
+        <span *ngIf="!scheduling()">Schedule Interview</span>
+      </button>
+    </div>
+  </div>
+</div>

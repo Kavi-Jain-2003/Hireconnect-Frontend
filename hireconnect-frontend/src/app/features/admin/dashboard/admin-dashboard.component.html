@@ -1,0 +1,110 @@
+<div class="loading-wrapper" *ngIf="loading()"><div class="spinner"></div><span>Loading dashboard…</span></div>
+<div class="alert alert-error" *ngIf="error()">{{error()}}</div>
+
+<ng-container *ngIf="!loading() && !error()">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Admin Dashboard</h1>
+      <p class="page-subtitle">Platform overview and user management</p>
+    </div>
+    <a class="btn btn-teal" routerLink="/admin/users">Manage Users →</a>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid-4">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(13,27,42,0.07)">
+        <svg width="22" height="22" fill="none" stroke="var(--navy)" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+        </svg>
+      </div>
+      <div class="stat-label">Total Users</div>
+      <div class="stat-value">{{totalUsers()}}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(0,201,167,0.1)">
+        <svg width="22" height="22" fill="none" stroke="var(--teal)" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/>
+        </svg>
+      </div>
+      <div class="stat-label">Candidates</div>
+      <div class="stat-value">{{candidates()}}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(244,162,97,0.1)">
+        <svg width="22" height="22" fill="none" stroke="var(--amber)" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="2" y="7" width="20" height="14" rx="2"/>
+          <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/>
+        </svg>
+      </div>
+      <div class="stat-label">Recruiters</div>
+      <div class="stat-value">{{recruiters()}}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(231,111,81,0.1)">
+        <svg width="22" height="22" fill="none" stroke="var(--rose)" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <div class="stat-label">Suspended</div>
+      <div class="stat-value">{{suspendedCount()}}</div>
+    </div>
+  </div>
+
+  <!-- Recent users table -->
+  <div class="card mt-32">
+    <div class="card-header">
+      <h3>Recently Registered Users</h3>
+      <a class="btn btn-ghost btn-sm" routerLink="/admin/users">View all →</a>
+    </div>
+    <div class="empty-state" style="padding:48px" *ngIf="users().length === 0">
+      <div class="empty-icon">👥</div>
+      <div class="empty-title">No users yet</div>
+    </div>
+    <table class="data-table" *ngIf="recentUsers().length > 0">
+      <thead>
+        <tr>
+          <th>ID</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let u of recentUsers()">
+          <td style="color:var(--text-muted);font-size:13px">#{{u.userId}}</td>
+          <td style="font-weight:500;color:var(--navy)">{{u.email}}</td>
+          <td>
+            <span class="badge" [class]="u.role === 'RECRUITER' ? 'badge-amber' : u.role === 'ADMIN' ? 'badge-navy' : 'badge-teal'">
+              {{u.role | titlecase}}
+            </span>
+          </td>
+          <td>
+            <span class="badge" [class]="u.suspended ? 'badge-gray' : 'badge-teal'">
+              {{u.suspended ? 'Suspended' : 'Active'}}
+            </span>
+          </td>
+          <td style="font-size:13px;color:var(--text-muted)">{{u.createdAt | date:'dd MMM yyyy'}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Quick links -->
+  <div class="grid-3 mt-24">
+    <a class="quick-link" routerLink="/admin/users">
+      <div class="quick-icon">🔐</div>
+      <div class="quick-label">Manage Users</div>
+      <div class="quick-sub">Suspend, unsuspend or delete accounts</div>
+    </a>
+    <a class="quick-link" routerLink="/jobs">
+      <div class="quick-icon">💼</div>
+      <div class="quick-label">Browse Jobs</div>
+      <div class="quick-sub">View all job listings on platform</div>
+    </a>
+    <a class="quick-link" routerLink="/">
+      <div class="quick-icon">🏠</div>
+      <div class="quick-label">Homepage</div>
+      <div class="quick-sub">View the public-facing site</div>
+    </a>
+  </div>
+</ng-container>

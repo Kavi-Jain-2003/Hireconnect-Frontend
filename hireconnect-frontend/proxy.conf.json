@@ -1,0 +1,52 @@
+{
+  "/auth": {
+    "target": "http://localhost:8081",
+    "changeOrigin": true,
+    "secure": false,
+    "logLevel": "debug"
+  },
+  "/admin": {
+    "target": "http://localhost:8080",
+    "changeOrigin": true,
+    "secure": false,
+    "logLevel": "debug"
+  },
+  "/api/jobs": {
+    "target": "http://localhost:8080",
+    "changeOrigin": true,
+    "secure": false,
+    "pathRewrite": {
+      "^/api/jobs": "/jobs"
+    }
+  },
+  "/profiles": {
+    "target": "http://localhost:8080",
+    "changeOrigin": true,
+    "secure": false
+  },
+  "/applications": {
+    "target": "http://localhost:8080",
+    "changeOrigin": true,
+    "secure": false
+  },
+  "/interviews": {
+    "target": "http://localhost:8080",
+    "changeOrigin": true,
+    "secure": false
+  },
+  "/notifications": {
+    "target": "http://localhost:8080",
+    "changeOrigin": true,
+    "secure": false
+  },
+  "/subscriptions": {
+    "target": "http://localhost:8080",
+    "changeOrigin": true,
+    "secure": false
+  },
+  "/analytics": {
+    "target": "http://localhost:8080",
+    "changeOrigin": true,
+    "secure": false
+  }
+}

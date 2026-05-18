@@ -1,0 +1,94 @@
+<nav class="navbar">
+  <a class="navbar-brand" routerLink="/">Hire<span>Connect</span></a>
+  <div class="navbar-spacer"></div>
+  <div class="navbar-actions">
+    <ng-container *ngIf="!auth.isLoggedIn()">
+      <a class="btn btn-outline btn-sm" routerLink="/auth/login">Sign In</a>
+      <a class="btn btn-teal btn-sm" routerLink="/auth/register">Get Started</a>
+    </ng-container>
+    <ng-container *ngIf="auth.isLoggedIn()">
+      <a *ngIf="auth.isCandidate()" class="btn btn-primary btn-sm" routerLink="/candidate/dashboard">Dashboard</a>
+      <a *ngIf="auth.isRecruiter()" class="btn btn-primary btn-sm" routerLink="/recruiter/dashboard">Dashboard</a>
+      <button class="btn btn-ghost btn-sm" (click)="logout()">Sign Out</button>
+    </ng-container>
+  </div>
+</nav>
+
+<div class="jobs-page">
+  <div class="jobs-header">
+    <div class="container">
+      <h1>Browse All Jobs</h1>
+      <p>{{filteredJobs().length}} opportunities available</p>
+
+      <div class="filters-row">
+        <div class="search-bar" style="flex:1; min-width:200px">
+          <svg width="18" height="18" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input [ngModel]="searchTitle()" (ngModelChange)="searchTitle.set($event); filter()" placeholder="Job title or company..." />
+        </div>
+        <div class="search-bar" style="min-width:180px">
+          <svg width="16" height="16" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <input [ngModel]="searchLocation()" (ngModelChange)="searchLocation.set($event); filter()" placeholder="Location..." />
+        </div>
+        <select class="form-control" style="width:160px" [ngModel]="selectedCategory()" (ngModelChange)="selectedCategory.set($event); filter()">
+          <option [ngValue]="''">All Categories</option>
+          <option *ngFor="let c of categories" [ngValue]="c">{{c}}</option>
+        </select>
+        <select class="form-control" style="width:150px" [ngModel]="selectedType()" (ngModelChange)="selectedType.set($event); filter()">
+          <option [ngValue]="''">All Types</option>
+          <option *ngFor="let t of types" [ngValue]="t">{{t}}</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" (click)="clearFilters()" *ngIf="searchTitle() || searchLocation() || selectedCategory() || selectedType()">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" style="padding-top: 32px; padding-bottom: 60px;">
+    <div class="loading-wrapper" *ngIf="loading()">
+      <div class="spinner"></div>
+      <span>Loading jobs...</span>
+      <button class="btn btn-ghost btn-sm" style="margin-left:12px" (click)="loadJobs()">Refresh</button>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading() && loadError()">
+      <div class="empty-icon">!</div>
+      <div class="empty-title">Could not load jobs</div>
+      <div class="empty-text">
+        {{ loadError() }}
+        <button class="btn btn-ghost btn-sm" style="margin-left:10px" (click)="loadJobs()">Retry</button>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading() && !loadError() && filteredJobs().length === 0">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-title">No jobs found</div>
+      <div class="empty-text">Try adjusting your filters or <button class="btn btn-ghost btn-sm" (click)="clearFilters()">clear all filters</button></div>
+    </div>
+
+    <div class="jobs-grid" *ngIf="!loading() && !loadError() && filteredJobs().length > 0">
+      <div class="job-card" *ngFor="let job of filteredJobs()" [routerLink]="['/jobs', job.jobId]">
+        <div class="flex justify-between items-center" style="margin-bottom: 16px;">
+          <div>
+            <div class="job-title">{{job.title}}</div>
+            <div class="job-company">{{job.company}}</div>
+            <div class="job-recruiter" style="font-size:12px; color:var(--text-muted); margin-top:2px;">👤 {{job.postedBy}}</div>
+          </div>
+          <span class="badge" [class]="job.status === 'OPEN' ? 'badge-teal' : 'badge-gray'">{{job.status}}</span>
+        </div>
+        <div class="job-meta">
+          <span class="job-meta-item">📍 {{job.location}}</span>
+          <span class="job-meta-item">⏱ {{job.experienceRequired}}+ yrs</span>
+          <span class="job-meta-item">💼 {{job.type}}</span>
+          <span class="job-meta-item" *ngIf="job.category">🏷 {{job.category}}</span>
+        </div>
+        <div class="job-skills">
+          <span class="job-skill" *ngFor="let s of job.skills?.slice(0,4)">{{s}}</span>
+          <span class="job-skill" *ngIf="job.skills?.length > 4">+{{job.skills.length - 4}}</span>
+        </div>
+        <div class="job-footer">
+          <span class="job-salary">{{formatSalary(job.salaryMin, job.salaryMax)}}</span>
+          <span class="btn btn-sm btn-outline">View Details →</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

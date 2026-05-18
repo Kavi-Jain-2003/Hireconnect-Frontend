@@ -1,0 +1,101 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Hiring Analytics</h1>
+    <p class="page-subtitle">Track your hiring performance and pipeline metrics</p>
+  </div>
+</div>
+
+<div class="loading-wrapper" *ngIf="loading()"><div class="spinner"></div></div>
+
+<div *ngIf="!loading() && !summary()" class="empty-state">
+  <div class="empty-icon">📊</div>
+  <div class="empty-title">No analytics data yet</div>
+  <div class="empty-text">Post jobs and receive applications to see your metrics here</div>
+</div>
+
+<ng-container *ngIf="!loading() && summary()">
+  <div class="grid-4">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(13,27,42,0.07)"><svg width="22" height="22" fill="none" stroke="var(--navy)" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg></div>
+      <div class="stat-label">Total Jobs</div>
+      <div class="stat-value">{{summary().totalJobs}}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(0,201,167,0.1)"><svg width="22" height="22" fill="none" stroke="var(--teal)" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+      <div class="stat-label">Total Applications</div>
+      <div class="stat-value">{{summary().totalApplications}}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(72,199,142,0.1)"><svg width="22" height="22" fill="none" stroke="#48C78E" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+      <div class="stat-label">Offers Made</div>
+      <div class="stat-value">{{summary().offeredCount}}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(244,162,97,0.1)"><svg width="22" height="22" fill="none" stroke="var(--amber)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      <div class="stat-label">Avg. Time to Hire</div>
+      <div class="stat-value">{{summary().avgTimeToHireDays | number:'1.0-0'}}</div>
+      <div class="stat-sub">days</div>
+    </div>
+  </div>
+
+  <div class="grid-2 mt-32">
+    <!-- Pipeline Breakdown -->
+    <div class="card">
+      <div class="card-header"><h3>Application Pipeline</h3></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:20px">
+        <div class="pipeline-row">
+          <div class="pipeline-label">Applied</div>
+          <div class="pipeline-bar-wrap">
+            <div class="pipeline-bar" style="background:var(--navy)" [style.width.%]="pct(summary().totalApplications, summary().totalApplications)"></div>
+          </div>
+          <div class="pipeline-val">{{summary().totalApplications}}</div>
+        </div>
+        <div class="pipeline-row">
+          <div class="pipeline-label">Shortlisted</div>
+          <div class="pipeline-bar-wrap">
+            <div class="pipeline-bar" style="background:var(--teal)" [style.width.%]="pct(summary().shortlistedCount, summary().totalApplications)"></div>
+          </div>
+          <div class="pipeline-val">{{summary().shortlistedCount}}</div>
+        </div>
+        <div class="pipeline-row">
+          <div class="pipeline-label">Offered</div>
+          <div class="pipeline-bar-wrap">
+            <div class="pipeline-bar" style="background:#48C78E" [style.width.%]="pct(summary().offeredCount, summary().totalApplications)"></div>
+          </div>
+          <div class="pipeline-val">{{summary().offeredCount}}</div>
+        </div>
+        <div class="pipeline-row">
+          <div class="pipeline-label">Rejected</div>
+          <div class="pipeline-bar-wrap">
+            <div class="pipeline-bar" style="background:var(--rose)" [style.width.%]="pct(summary().rejectedCount, summary().totalApplications)"></div>
+          </div>
+          <div class="pipeline-val">{{summary().rejectedCount}}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="card">
+      <div class="card-header"><h3>Key Metrics</h3></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:20px">
+        <div class="metric-row">
+          <div>
+            <div class="stat-label">View-to-Apply Ratio</div>
+            <div style="font-size:28px;font-weight:700;color:var(--navy);margin-top:4px">{{summary().viewToApplyRatio | number:'1.0-2'}}%</div>
+          </div>
+          <div style="width:60px;height:60px;border-radius:50%;background:rgba(0,201,167,0.1);display:flex;align-items:center;justify-content:center;font-size:22px">📈</div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:20px">
+          <div class="stat-label">Shortlist Rate</div>
+          <div style="font-size:28px;font-weight:700;color:var(--navy);margin-top:4px">{{pct(summary().shortlistedCount, summary().totalApplications)}}%</div>
+          <div class="text-sm text-muted" style="margin-top:2px">of all applications shortlisted</div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:20px">
+          <div class="stat-label">Offer Rate</div>
+          <div style="font-size:28px;font-weight:700;color:var(--navy);margin-top:4px">{{pct(summary().offeredCount, summary().totalApplications)}}%</div>
+          <div class="text-sm text-muted" style="margin-top:2px">of all applications received an offer</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
