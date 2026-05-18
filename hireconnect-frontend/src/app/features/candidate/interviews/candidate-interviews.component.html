@@ -6,24 +6,24 @@
   <button class="btn btn-ghost btn-sm" (click)="ngOnInit()">Refresh ↺</button>
 </div>
 
-<div class="alert alert-success" *ngIf="actionMsg">{{actionMsg}}</div>
-<div class="loading-wrapper" *ngIf="loading"><div class="spinner"></div></div>
+<div class="alert alert-success" *ngIf="actionMsg()">{{actionMsg()}}</div>
+<div class="loading-wrapper" *ngIf="loading()"><div class="spinner"></div></div>
 
-<div class="empty-state" *ngIf="!loading && interviews.length === 0">
+<div class="empty-state" *ngIf="!loading() && interviews().length === 0">
   <div class="empty-icon">📅</div>
   <div class="empty-title">No interviews scheduled</div>
   <div class="empty-text">Once a recruiter schedules an interview, it will appear here</div>
 </div>
 
-<div class="interviews-grid" *ngIf="!loading && interviews.length > 0">
-  <div class="card interview-card" *ngFor="let iv of interviews">
+<div class="interviews-grid" *ngIf="!loading() && interviews().length > 0">
+  <div class="card interview-card" *ngFor="let iv of interviews()">
     <div class="card-body">
 
       <div class="flex justify-between items-center mb-16">
         <div>
           <!-- Job title (NEW) -->
           <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em">
-            {{ jobTitleByAppId[iv.applicationId] || ('Application #' + iv.applicationId) }}
+            {{ jobTitleByAppId()[iv.applicationId] || ('Application #' + iv.applicationId) }}
           </div>
           <div style="font-size:20px;font-weight:700;color:var(--navy);margin-top:4px">
             {{iv.scheduledAt | date:'EEEE, dd MMM yyyy'}}
@@ -34,18 +34,18 @@
       </div>
 
       <!-- ── Recruiter info card (NEW) ── -->
-      <div *ngIf="recruiterByAppId[iv.applicationId]"
+      <div *ngIf="recruiterByAppId()[iv.applicationId]"
            style="background:var(--cream);border-radius:8px;padding:10px 14px;margin-bottom:16px;border-left:3px solid var(--teal)">
         <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:4px">Scheduled by</div>
         <div style="font-size:14px;font-weight:600;color:var(--navy)">
-          {{ recruiterByAppId[iv.applicationId].fullName }}
+          {{ recruiterByAppId()[iv.applicationId].fullName }}
         </div>
         <div style="font-size:13px;color:var(--teal-dim);margin-top:2px">
-          ✉ {{ recruiterByAppId[iv.applicationId].email }}
+          ✉ {{ recruiterByAppId()[iv.applicationId].email }}
         </div>
         <div style="font-size:12px;color:var(--text-secondary);margin-top:2px"
-             *ngIf="recruiterByAppId[iv.applicationId].companyName">
-          🏢 {{ recruiterByAppId[iv.applicationId].companyName }}
+             *ngIf="recruiterByAppId()[iv.applicationId].companyName">
+          🏢 {{ recruiterByAppId()[iv.applicationId].companyName }}
         </div>
       </div>
 
@@ -82,23 +82,23 @@
 </div>
 
 <!-- Reschedule Modal -->
-<div class="modal-overlay" *ngIf="showRescheduleModal">
+<div class="modal-overlay" *ngIf="showRescheduleModal()">
   <div class="modal">
     <div class="modal-header">
       <h3>Reschedule Interview</h3>
-      <button class="btn btn-ghost btn-sm" (click)="showRescheduleModal=false">✕</button>
+      <button class="btn btn-ghost btn-sm" (click)="showRescheduleModal.set(false)">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-group">
         <label>New Date & Time *</label>
-        <input class="form-control" type="datetime-local" [(ngModel)]="rescheduleAt">
+        <input class="form-control" type="datetime-local" [ngModel]="rescheduleAt()" (ngModelChange)="rescheduleAt.set($event)">
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" (click)="showRescheduleModal=false">Cancel</button>
-      <button class="btn btn-teal" (click)="submitReschedule()" [disabled]="rescheduling || !rescheduleAt">
-        <span *ngIf="rescheduling" class="spinner" style="width:15px;height:15px;border-width:2px"></span>
-        <span *ngIf="!rescheduling">Reschedule</span>
+      <button class="btn btn-ghost" (click)="showRescheduleModal.set(false)">Cancel</button>
+      <button class="btn btn-teal" (click)="submitReschedule()" [disabled]="rescheduling() || !rescheduleAt()">
+        <span *ngIf="rescheduling()" class="spinner" style="width:15px;height:15px;border-width:2px"></span>
+        <span *ngIf="!rescheduling()">Reschedule</span>
       </button>
     </div>
   </div>

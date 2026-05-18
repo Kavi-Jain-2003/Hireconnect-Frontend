@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProfileService } from '../../../core/services/profile.service';
 import { JobService } from '../../../core/services/job.service';
@@ -12,14 +12,14 @@ import { RecruiterProfile, Job } from '../../../core/models';
   styleUrls: ['./recruiter-dashboard.component.scss']
 })
 export class RecruiterDashboardComponent implements OnInit {
-  profile: RecruiterProfile | null = null;
-  jobs: Job[] = [];
-  totalApps = 0;
-  loading = true;
-  profileError = false;
+  profile = signal<RecruiterProfile | null>(null);
+  jobs = signal<Job[]>([]);
+  totalApps = signal(0);
+  loading = signal(true);
+  profileError = signal(false);
 
-  get openJobs()  { return this.jobs.filter(j => j.status === 'OPEN').length; }
-  get totalJobs() { return this.jobs.length; }
+  openJobs  = computed(() => this.jobs().filter(j => j.status === 'OPEN').length);
+  totalJobs = computed(() => this.jobs().length);
 
   constructor(
     public auth: AuthService,
@@ -29,16 +29,14 @@ export class RecruiterDashboardComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Load recruiter profile first — email comes from JWT stored in localStorage
     this.profileSvc.getRecruiterByEmail(this.auth.getEmail()!).subscribe({
       next: profile => {
-        this.profile = profile;
-        this.loadJobs(profile.email); // filter by email (postedBy = recruiter email)
+        this.profile.set(profile);
+        this.loadJobs(profile.email);
       },
       error: () => {
-        // Profile doesn't exist yet — still show empty dashboard
-        this.profileError = true;
-        this.loading = false;
+        this.profileError.set(true);
+        this.loading.set(false);
       }
     });
   }
@@ -46,19 +44,18 @@ export class RecruiterDashboardComponent implements OnInit {
   private loadJobs(recruiterEmail: string) {
     this.jobSvc.getAllJobs().subscribe({
       next: all => {
-        // postedBy is the recruiter's email (set by backend from JWT)
-        this.jobs = all.filter(j => j.postedBy === recruiterEmail);
-        this.loading = false;
+        this.jobs.set(all.filter(j => j.postedBy === recruiterEmail));
+        this.loading.set(false);
         this.loadAppCounts();
       },
-      error: () => { this.loading = false; }
+      error: () => { this.loading.set(false); }
     });
   }
 
   private loadAppCounts() {
-    this.jobs.forEach(j => {
+    this.jobs().forEach(j => {
       this.appSvc.countByJob(j.jobId).subscribe({
-        next: c => { this.totalApps += (c || 0); },
+        next: c => { this.totalApps.update(v => v + (c || 0)); },
         error: () => {}
       });
     });

@@ -27,11 +27,11 @@
 
       <div class="divider"><span>or sign in with email</span></div>
 
-      <div class="alert alert-error" *ngIf="error">
+      <div class="alert alert-error" *ngIf="error()">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
-        {{error}}
+        {{error()}}
       </div>
 
       <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
@@ -48,11 +48,11 @@
         <div class="form-group">
           <label>Password</label>
           <div class="password-wrap">
-            <input class="form-control" [type]="showPassword ? 'text' : 'password'"
+            <input class="form-control" [type]="showPassword() ? 'text' : 'password'"
               formControlName="password" placeholder="Min. 6 characters" autocomplete="current-password"
               [class.error]="form.get('password')?.invalid && form.get('password')?.touched">
-            <button type="button" class="toggle-pw" (click)="showPassword = !showPassword">
-              {{showPassword ? 'Hide' : 'Show'}}
+            <button type="button" class="toggle-pw" (click)="showPassword.set(!showPassword())">
+              {{showPassword() ? 'Hide' : 'Show'}}
             </button>
           </div>
           <div class="field-error" *ngIf="form.get('password')?.invalid && form.get('password')?.touched">
@@ -60,10 +60,10 @@
           </div>
         </div>
 
-        <button type="submit" class="btn btn-teal w-full" [disabled]="loading"
+        <button type="submit" class="btn btn-teal w-full" [disabled]="loading()"
           style="justify-content:center;padding:14px;font-size:15px">
-          <span *ngIf="loading" class="spinner" style="width:18px;height:18px;border-width:2px"></span>
-          <span *ngIf="!loading">Sign In</span>
+          <span *ngIf="loading()" class="spinner" style="width:18px;height:18px;border-width:2px"></span>
+          <span *ngIf="!loading()">Sign In</span>
         </button>
       </form>
 

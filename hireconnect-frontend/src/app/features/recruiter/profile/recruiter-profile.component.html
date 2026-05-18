@@ -4,13 +4,13 @@
     <p class="page-subtitle">Build trust with candidates by completing your company profile</p>
   </div>
 </div>
-<div class="loading-wrapper" *ngIf="loading"><div class="spinner"></div></div>
-<div class="grid-2" *ngIf="!loading" style="align-items:start">
+<div class="loading-wrapper" *ngIf="loading()"><div class="spinner"></div></div>
+<div class="grid-2" *ngIf="!loading()" style="align-items:start">
   <div class="card">
     <div class="card-header"><h3>Company Details</h3></div>
     <div class="card-body">
-      <div class="alert alert-success" *ngIf="success">{{success}}</div>
-      <div class="alert alert-error" *ngIf="error">{{error}}</div>
+      <div class="alert alert-success" *ngIf="success()">{{success()}}</div>
+      <div class="alert alert-error" *ngIf="error()">{{error()}}</div>
       <form [formGroup]="form" (ngSubmit)="save()" style="display:flex;flex-direction:column;gap:20px">
         <div class="grid-2">
           <div class="form-group">
@@ -44,9 +44,9 @@
             <input class="form-control" formControlName="website" placeholder="https://company.com">
           </div>
         </div>
-        <button type="submit" class="btn btn-teal" [disabled]="saving" style="align-self:flex-start;min-width:160px;justify-content:center">
-          <span *ngIf="saving" class="spinner" style="width:16px;height:16px;border-width:2px"></span>
-          <span *ngIf="!saving">{{profile ? 'Update Profile' : 'Create Profile'}}</span>
+        <button type="submit" class="btn btn-teal" [disabled]="saving()" style="align-self:flex-start;min-width:160px;justify-content:center">
+          <span *ngIf="saving()" class="spinner" style="width:16px;height:16px;border-width:2px"></span>
+          <span *ngIf="!saving()">{{profile() ? 'Update Profile' : 'Create Profile'}}</span>
         </button>
       </form>
     </div>
@@ -55,15 +55,16 @@
     <div class="card-header"><h3>Profile Preview</h3></div>
     <div class="card-body" style="display:flex;flex-direction:column;gap:16px">
       <div style="width:72px;height:72px;border-radius:16px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:28px;color:white">
-        {{(profile?.companyName || 'C')[0].toUpperCase()}}
+        {{(profile()?.companyName || 'C')[0].toUpperCase()}}
       </div>
-      <div *ngIf="profile">
-        <div style="font-size:20px;font-weight:700;color:var(--navy)">{{profile.companyName}}</div>
-        <div class="text-sm text-muted" style="margin-top:4px">{{profile.industry}} · {{profile.companySize}} employees</div>
-        <div class="text-sm text-muted" style="margin-top:2px">{{profile.email}}</div>
-        <a *ngIf="profile.website" [href]="profile.website" target="_blank" class="text-sm" style="color:var(--teal-dim);margin-top:4px;display:block">{{profile.website}}</a>
+      <div *ngIf="profile()">
+        <div style="font-size:20px;font-weight:700;color:var(--navy)">{{profile().companyName}}</div>
+        <div class="text-sm" style="margin-top:2px;color:var(--navy);font-weight:500">{{profile().fullName}}</div>
+        <div class="text-sm text-muted" style="margin-top:4px">{{profile().industry}} · {{profile().companySize}} employees</div>
+        <div class="text-sm text-muted" style="margin-top:2px">{{profile().email}}</div>
+        <a *ngIf="profile().website" [href]="profile().website" target="_blank" class="text-sm" style="color:var(--teal-dim);margin-top:4px;display:block">{{profile().website}}</a>
       </div>
-      <div *ngIf="!profile" class="text-sm text-muted">Fill in the form to build your profile</div>
+      <div *ngIf="!profile()" class="text-sm text-muted">Fill in the form to build your profile</div>
     </div>
   </div>
 </div>

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProfileService } from '../../../core/services/profile.service';
 import { ApplicationService } from '../../../core/services/application.service';
@@ -14,11 +14,16 @@ interface AppRow extends Application { job?: Job; }
   styleUrls: ['./candidate-applications.component.scss']
 })
 export class CandidateApplicationsComponent implements OnInit {
-  apps: AppRow[] = [];
-  loading = true;
-  filterStatus = '';
-  withdrawingId: number | null = null;
-  error = '';
+  apps = signal<AppRow[]>([]);
+  loading = signal(true);
+  filterStatus = signal('');
+  withdrawingId = signal<number | null>(null);
+  error = signal('');
+
+  filtered = computed(() => {
+    const status = this.filterStatus();
+    return status ? this.apps().filter(a => a.status === status) : this.apps();
+  });
 
   STATUS_LABELS: Record<string, string> = {
     APPLIED: 'Applied', SHORTLISTED: 'Shortlisted',
@@ -36,32 +41,34 @@ export class CandidateApplicationsComponent implements OnInit {
       next: p => {
         this.appSvc.getByCandidate(p.profileId).subscribe({
           next: apps => {
-            this.apps = [...apps];
-            this.loading = false;
+            this.apps.set([...apps]);
+            this.loading.set(false);
             apps.forEach((app, i) => {
               this.jobSvc.getJobById(app.jobId).subscribe({
-                next: job => { this.apps[i] = { ...this.apps[i], job }; },
+                next: job => {
+                  this.apps.update(current => {
+                    const updated = [...current];
+                    updated[i] = { ...updated[i], job };
+                    return updated;
+                  });
+                },
                 error: () => {}
               });
             });
           },
-          error: err => { this.error = err.error?.message || 'Failed to load'; this.loading = false; }
+          error: err => { this.error.set(err.error?.message || 'Failed to load'); this.loading.set(false); }
         });
       },
-      error: () => { this.error = 'Profile not found. Please create your profile first.'; this.loading = false; }
+      error: () => { this.error.set('Profile not found. Please create your profile first.'); this.loading.set(false); }
     });
-  }
-
-  get filtered() {
-    return this.filterStatus ? this.apps.filter(a => a.status === this.filterStatus) : this.apps;
   }
 
   withdraw(id: number) {
     if (!confirm('Withdraw this application?')) return;
-    this.withdrawingId = id;
+    this.withdrawingId.set(id);
     this.appSvc.withdraw(id).subscribe({
-      next: () => { this.apps = this.apps.filter(a => a.applicationId !== id); this.withdrawingId = null; },
-      error: err => { alert(err.error?.message || 'Failed to withdraw'); this.withdrawingId = null; }
+      next: () => { this.apps.update(apps => apps.filter(a => a.applicationId !== id)); this.withdrawingId.set(null); },
+      error: err => { alert(err.error?.message || 'Failed to withdraw'); this.withdrawingId.set(null); }
     });
   }
 

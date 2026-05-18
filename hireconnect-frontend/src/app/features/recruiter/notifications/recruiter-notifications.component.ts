@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { NotificationService } from '../../../core/services/interview-notification.service';
 import { Notification } from '../../../core/models';
 
@@ -9,9 +9,11 @@ import { Notification } from '../../../core/models';
   styleUrls: ['./recruiter-notifications.component.scss']
 })
 export class RecruiterNotificationsComponent implements OnInit {
-  notifications: Notification[] = [];
-  loading = true;
-  markingAll = false;
+  notifications = signal<Notification[]>([]);
+  loading = signal(true);
+  markingAll = signal(false);
+
+  unreadCount = computed(() => this.notifications().filter(n => !n.isRead).length);
 
   constructor(private notifSvc: NotificationService) {}
 
@@ -22,7 +24,7 @@ export class RecruiterNotificationsComponent implements OnInit {
   ngOnInit() { this.load(); }
 
   load() {
-    this.loading = true;
+    this.loading.set(true);
     this.notifSvc.getMyNotifications().subscribe({
       next: n => {
         const unique = new Map<string, Notification>();
@@ -34,37 +36,36 @@ export class RecruiterNotificationsComponent implements OnInit {
             unique.set(key, normalized);
           }
         });
-        this.notifications = Array.from(unique.values())
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        this.loading = false;
+        this.notifications.set(
+          Array.from(unique.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        );
+        this.loading.set(false);
       },
-      error: () => { this.loading = false; }
+      error: () => { this.loading.set(false); }
     });
   }
 
   markRead(id: number) {
     this.notifSvc.markRead(id).subscribe({
-      next: () => { this.notifications = this.notifications.map(n => n.notificationId === id ? { ...n, isRead: true } : n); },
+      next: () => { this.notifications.update(ns => ns.map(n => n.notificationId === id ? { ...n, isRead: true } : n)); },
       error: () => {}
     });
   }
 
   markAllRead() {
-    this.markingAll = true;
+    this.markingAll.set(true);
     this.notifSvc.markAllRead().subscribe({
-      next: () => { this.notifications = this.notifications.map(n => ({ ...n, isRead: true })); this.markingAll = false; },
-      error: () => { this.markingAll = false; }
+      next: () => { this.notifications.update(ns => ns.map(n => ({ ...n, isRead: true }))); this.markingAll.set(false); },
+      error: () => { this.markingAll.set(false); }
     });
   }
 
   delete(id: number) {
     this.notifSvc.delete(id).subscribe({
-      next: () => { this.notifications = this.notifications.filter(n => n.notificationId !== id); },
+      next: () => { this.notifications.update(ns => ns.filter(n => n.notificationId !== id)); },
       error: () => {}
     });
   }
-
-  get unreadCount() { return this.notifications.filter(n => !n.isRead).length; }
 
   typeIcon(type: string) {
     const icons: Record<string, string> = {

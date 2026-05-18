@@ -20,10 +20,11 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render title', async () => {
+  it('should render the router outlet', () => {
     const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
+    fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, hireconnect-frontend');
+    // app.html only contains <router-outlet> — no h1 is rendered at the app shell level
+    expect(compiled.querySelector('router-outlet')).not.toBeNull();
   });
 });

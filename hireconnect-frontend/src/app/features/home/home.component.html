@@ -31,7 +31,7 @@
     </div>
     <div class="hero-stats">
       <div class="hero-stat">
-        <span class="hero-stat-value">{{featuredJobs.length + 100}}+</span>
+        <span class="hero-stat-value">{{featuredJobs().length + 100}}+</span>
         <span class="hero-stat-label">Live Jobs</span>
       </div>
       <div class="hero-stat-divider"></div>
@@ -104,14 +104,14 @@
 </section>
 
 <!-- FEATURED JOBS -->
-<section class="featured-jobs" *ngIf="featuredJobs.length > 0">
+<section class="featured-jobs" *ngIf="featuredJobs().length > 0">
   <div class="container">
     <div class="section-header">
       <h2>Featured Opportunities</h2>
       <a class="btn btn-ghost btn-sm" routerLink="/jobs">View all jobs →</a>
     </div>
     <div class="grid-2">
-      <div class="job-card" *ngFor="let job of featuredJobs" [routerLink]="['/jobs', job.jobId]">
+      <div class="job-card" *ngFor="let job of featuredJobs()" [routerLink]="['/jobs', job.jobId]">
         <div class="flex justify-between items-center mb-16">
           <div>
             <div class="job-title">{{job.title}}</div>

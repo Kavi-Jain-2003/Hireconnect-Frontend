@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProfileService } from '../../../core/services/profile.service';
 import { ApplicationService } from '../../../core/services/application.service';
@@ -13,15 +13,15 @@ import { Interview, RecruiterProfile } from '../../../core/models';
   styleUrls: ['./candidate-interviews.component.scss']
 })
 export class CandidateInterviewsComponent implements OnInit {
-  interviews: Interview[] = [];
-  recruiterByAppId: Record<number, RecruiterProfile> = {};   // ← NEW
-  jobTitleByAppId: Record<number, string> = {};              // ← NEW
-  loading = true;
-  actionMsg = '';
-  showRescheduleModal = false;
-  rescheduleId: number | null = null;
-  rescheduleAt = '';
-  rescheduling = false;
+  interviews = signal<Interview[]>([]);
+  recruiterByAppId = signal<Record<number, RecruiterProfile>>({});
+  jobTitleByAppId = signal<Record<number, string>>({});
+  loading = signal(true);
+  actionMsg = signal('');
+  showRescheduleModal = signal(false);
+  rescheduleId = signal<number | null>(null);
+  rescheduleAt = signal('');
+  rescheduling = signal(false);
 
   constructor(
     private auth: AuthService,
@@ -32,67 +32,71 @@ export class CandidateInterviewsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.loading = true;
-    this.interviews = [];
-    this.recruiterByAppId = {};
-    this.jobTitleByAppId = {};
+    this.loading.set(true);
+    this.interviews.set([]);
+    this.recruiterByAppId.set({});
+    this.jobTitleByAppId.set({});
 
     this.profileSvc.getCandidateByEmail(this.auth.getEmail()!).subscribe({
       next: p => {
         this.appSvc.getByCandidate(p.profileId).subscribe({
           next: apps => {
-            if (apps.length === 0) { this.loading = false; return; }
+            if (apps.length === 0) { this.loading.set(false); return; }
             const relevantApps = apps.filter(a =>
               ['INTERVIEW_SCHEDULED', 'OFFERED', 'REJECTED', 'SHORTLISTED'].includes(a.status)
             );
             const appsToCheck = relevantApps.length > 0 ? relevantApps : apps;
             let pending = appsToCheck.length;
-            if (pending === 0) { this.loading = false; return; }
+            if (pending === 0) { this.loading.set(false); return; }
 
+            const collected: Interview[] = [];
             appsToCheck.forEach(app => {
               this.interviewSvc.getByApplication(app.applicationId).subscribe({
                 next: ivs => {
-                  this.interviews.push(...ivs);
+                  collected.push(...ivs);
                   pending--;
                   if (!pending) {
                     const unique = new Map<number, Interview>();
-                    this.interviews.forEach(iv => {
+                    collected.forEach(iv => {
                       const current = unique.get(iv.applicationId);
                       if (!current || new Date(iv.scheduledAt).getTime() > new Date(current.scheduledAt).getTime()) {
                         unique.set(iv.applicationId, iv);
                       }
                     });
-                    this.interviews = Array.from(unique.values()).sort((a, b) =>
-                      new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
+                    this.interviews.set(
+                      Array.from(unique.values()).sort((a, b) =>
+                        new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
+                      )
                     );
-                    this.loading = false;
-                    this.loadRecruiterInfoForInterviews(appsToCheck.reduce((m, a) => { m[a.applicationId] = a.jobId; return m; }, {} as Record<number, number>));
+                    this.loading.set(false);
+                    this.loadRecruiterInfoForInterviews(
+                      appsToCheck.reduce((m, a) => { m[a.applicationId] = a.jobId; return m; }, {} as Record<number, number>)
+                    );
                   }
                 },
-                error: () => { pending--; if (!pending) this.loading = false; }
+                error: () => { pending--; if (!pending) this.loading.set(false); }
               });
             });
           },
-          error: () => { this.loading = false; }
+          error: () => { this.loading.set(false); }
         });
       },
-      error: () => { this.loading = false; }
+      error: () => { this.loading.set(false); }
     });
   }
 
-  // ── NEW: for each interview, fetch job → recruiter email → recruiter profile ──
   private loadRecruiterInfoForInterviews(appIdToJobId: Record<number, number>) {
-    this.interviews.forEach(iv => {
+    this.interviews().forEach(iv => {
       const jobId = appIdToJobId[iv.applicationId];
       if (!jobId) return;
 
       this.jobSvc.getJobById(jobId).subscribe({
         next: job => {
-          this.jobTitleByAppId = { ...this.jobTitleByAppId, [iv.applicationId]: job.title };
+          this.jobTitleByAppId.update(m => ({ ...m, [iv.applicationId]: job.title }));
           if (job.postedBy) {
             this.profileSvc.getRecruiterByEmail(job.postedBy).subscribe({
               next: recruiter => {
-                this.recruiterByAppId = { ...this.recruiterByAppId, [iv.applicationId]: recruiter };
+                this.recruiterByAppId.update(m => ({ ...m, [iv.applicationId]: recruiter }));
               },
               error: () => {}
             });
@@ -105,33 +109,33 @@ export class CandidateInterviewsComponent implements OnInit {
 
   confirm(id: number) {
     this.interviewSvc.confirm(id).subscribe({
-      next: () => { this.actionMsg = '✓ Interview confirmed!'; this.patchStatus(id, 'CONFIRMED'); },
-      error: err => { this.actionMsg = err.error?.message || 'Failed to confirm'; }
+      next: () => { this.actionMsg.set('✓ Interview confirmed!'); this.patchStatus(id, 'CONFIRMED'); },
+      error: err => { this.actionMsg.set(err.error?.message || 'Failed to confirm'); }
     });
   }
 
   openReschedule(id: number) {
-    this.rescheduleId = id;
-    this.rescheduleAt = '';
-    this.showRescheduleModal = true;
+    this.rescheduleId.set(id);
+    this.rescheduleAt.set('');
+    this.showRescheduleModal.set(true);
   }
 
   submitReschedule() {
-    if (!this.rescheduleId || !this.rescheduleAt) return;
-    this.rescheduling = true;
-    this.interviewSvc.reschedule(this.rescheduleId, this.rescheduleAt).subscribe({
+    if (!this.rescheduleId() || !this.rescheduleAt()) return;
+    this.rescheduling.set(true);
+    const scheduledAt = this.rescheduleAt();
+    this.interviewSvc.reschedule(this.rescheduleId()!, scheduledAt).subscribe({
       next: () => {
-        const scheduledAt = this.rescheduleAt;
-        this.interviews = this.interviews.map(iv =>
-          iv.interviewId === this.rescheduleId ? { ...iv, scheduledAt, status: 'RESCHEDULED' } : iv
+        this.interviews.update(ivs =>
+          ivs.map(iv => iv.interviewId === this.rescheduleId() ? { ...iv, scheduledAt, status: 'RESCHEDULED' } : iv)
         );
-        this.actionMsg = 'Interview rescheduled successfully.';
-        this.showRescheduleModal = false;
-        this.rescheduling = false;
+        this.actionMsg.set('Interview rescheduled successfully.');
+        this.showRescheduleModal.set(false);
+        this.rescheduling.set(false);
       },
       error: err => {
-        this.actionMsg = err.error?.message || 'Failed to reschedule';
-        this.rescheduling = false;
+        this.actionMsg.set(err.error?.message || 'Failed to reschedule');
+        this.rescheduling.set(false);
       }
     });
   }
@@ -139,13 +143,13 @@ export class CandidateInterviewsComponent implements OnInit {
   cancel(id: number) {
     if (!confirm('Cancel this interview?')) return;
     this.interviewSvc.cancel(id).subscribe({
-      next: () => { this.actionMsg = 'Interview cancelled.'; this.patchStatus(id, 'CANCELLED'); },
-      error: err => { this.actionMsg = err.error?.message || 'Failed to cancel'; }
+      next: () => { this.actionMsg.set('Interview cancelled.'); this.patchStatus(id, 'CANCELLED'); },
+      error: err => { this.actionMsg.set(err.error?.message || 'Failed to cancel'); }
     });
   }
 
   private patchStatus(id: number, status: string) {
-    this.interviews = this.interviews.map(iv => iv.interviewId === id ? { ...iv, status } : iv);
+    this.interviews.update(ivs => ivs.map(iv => iv.interviewId === id ? { ...iv, status } : iv));
   }
 
   statusClass(s: string) {

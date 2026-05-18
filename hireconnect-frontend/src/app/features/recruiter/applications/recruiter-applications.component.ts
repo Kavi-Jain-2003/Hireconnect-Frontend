@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProfileService } from '../../../core/services/profile.service';
 import { JobService } from '../../../core/services/job.service';
@@ -13,24 +13,28 @@ import { Application, Job, CandidateProfile } from '../../../core/models';
   styleUrls: ['./recruiter-applications.component.scss']
 })
 export class RecruiterApplicationsComponent implements OnInit {
-  jobs: Job[] = [];
-  selectedJobId: number | null = null;
-  apps: Application[] = [];
-  interviewStatusByAppId: Record<number, string> = {};
-  candidateByAppId: Record<number, CandidateProfile> = {};   // ← NEW
-  loading = true;
-  appsLoading = false;
-  updatingId: number | null = null;
-  showScheduleModal = false;
-  scheduleAppId: number | null = null;
-  scheduleForm = { scheduledAt: '', mode: 'Online', meetLink: '', location: '', notes: '' };
-  scheduling = false;
-  msg = '';
-  msgType: 'success' | 'error' = 'success';
+  jobs = signal<Job[]>([]);
+  selectedJobId = signal<number | null>(null);
+  apps = signal<Application[]>([]);
+  interviewStatusByAppId = signal<Record<number, string>>({});
+  candidateByAppId = signal<Record<number, CandidateProfile>>({});
+  loading = signal(true);
+  appsLoading = signal(false);
+  updatingId = signal<number | null>(null);
+  showScheduleModal = signal(false);
+  scheduleAppId = signal<number | null>(null);
+  scheduleForm = signal({ scheduledAt: '', mode: 'Online', meetLink: '', location: '', notes: '' });
+  scheduling = signal(false);
+  msg = signal('');
+  msgType = signal<'success' | 'error'>('success');
 
-  constructor(private auth: AuthService, private profileSvc: ProfileService,
+  selectedJob = computed(() => this.jobs().find(j => j.jobId === this.selectedJobId()));
+
+  constructor(
+    private auth: AuthService, private profileSvc: ProfileService,
     private jobSvc: JobService, private appSvc: ApplicationService,
-    private interviewSvc: InterviewService) {}
+    private interviewSvc: InterviewService
+  ) {}
 
   private normalizeDateTime(value: string): string {
     if (!value) return value;
@@ -42,39 +46,39 @@ export class RecruiterApplicationsComponent implements OnInit {
       next: p => {
         this.jobSvc.getAllJobs().subscribe({
           next: all => {
-            this.jobs = all.filter(j => j.postedBy === p.email);
-            this.loading = false;
-            if (this.jobs.length > 0) this.selectJob(this.jobs[0].jobId);
+            this.jobs.set(all.filter(j => j.postedBy === p.email));
+            this.loading.set(false);
+            const jobs = this.jobs();
+            if (jobs.length > 0) this.selectJob(jobs[0].jobId);
           },
-          error: () => { this.loading = false; }
+          error: () => { this.loading.set(false); }
         });
       },
-      error: () => { this.loading = false; }
+      error: () => { this.loading.set(false); }
     });
   }
 
   selectJob(jobId: number) {
-    this.selectedJobId = jobId;
-    this.appsLoading = true;
-    this.apps = [];
-    this.candidateByAppId = {};
+    this.selectedJobId.set(jobId);
+    this.appsLoading.set(true);
+    this.apps.set([]);
+    this.candidateByAppId.set({});
     this.appSvc.getByJob(jobId).subscribe({
       next: apps => {
-        this.apps = apps;
+        this.apps.set(apps);
         this.loadInterviewStatuses(apps);
-        this.loadCandidateProfiles(apps);   // ← NEW
-        this.appsLoading = false;
+        this.loadCandidateProfiles(apps);
+        this.appsLoading.set(false);
       },
-      error: () => { this.appsLoading = false; }
+      error: () => { this.appsLoading.set(false); }
     });
   }
 
-  // ── NEW: fetch candidate profile for each application ──────────────────────
   private loadCandidateProfiles(apps: Application[]) {
     apps.forEach(app => {
       this.profileSvc.getCandidateById(app.candidateId).subscribe({
         next: profile => {
-          this.candidateByAppId = { ...this.candidateByAppId, [app.applicationId]: profile };
+          this.candidateByAppId.update(m => ({ ...m, [app.applicationId]: profile }));
         },
         error: () => {}
       });
@@ -82,7 +86,7 @@ export class RecruiterApplicationsComponent implements OnInit {
   }
 
   private loadInterviewStatuses(apps: Application[]) {
-    this.interviewStatusByAppId = {};
+    this.interviewStatusByAppId.set({});
     apps.forEach(app => {
       this.interviewSvc.getByApplication(app.applicationId).subscribe({
         next: ivs => {
@@ -90,10 +94,7 @@ export class RecruiterApplicationsComponent implements OnInit {
             new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
           )[0];
           if (latest) {
-            this.interviewStatusByAppId = {
-              ...this.interviewStatusByAppId,
-              [app.applicationId]: latest.status
-            };
+            this.interviewStatusByAppId.update(m => ({ ...m, [app.applicationId]: latest.status }));
           }
         },
         error: () => {}
@@ -102,123 +103,124 @@ export class RecruiterApplicationsComponent implements OnInit {
   }
 
   updateStatus(app: Application, status: string) {
-    this.updatingId = app.applicationId;
-    this.msg = '';
+    this.updatingId.set(app.applicationId);
+    this.msg.set('');
     this.appSvc.updateStatus(app.applicationId, status).subscribe({
       next: () => {
-        this.apps = this.apps.map(a => a.applicationId === app.applicationId ? { ...a, status } : a);
-        this.updatingId = null;
-        this.msgType = 'success';
-        this.msg = `Status updated to ${this.statusLabel(status)}`;
+        this.apps.update(apps => apps.map(a => a.applicationId === app.applicationId ? { ...a, status } : a));
+        this.updatingId.set(null);
+        this.msgType.set('success');
+        this.msg.set(`Status updated to ${this.statusLabel(status)}`);
       },
       error: err => {
-        this.msgType = 'error';
-        this.msg = err.error?.message || 'Status update failed';
-        this.updatingId = null;
+        this.msgType.set('error');
+        this.msg.set(err.error?.message || 'Status update failed');
+        this.updatingId.set(null);
       }
     });
   }
 
   openSchedule(appId: number) {
-    this.scheduleAppId = appId;
-    this.scheduleForm = { scheduledAt: '', mode: 'Online', meetLink: '', location: '', notes: '' };
-    this.showScheduleModal = true;
+    this.scheduleAppId.set(appId);
+    this.scheduleForm.set({ scheduledAt: '', mode: 'Online', meetLink: '', location: '', notes: '' });
+    this.showScheduleModal.set(true);
   }
 
   scheduleInterview() {
-    if (!this.scheduleAppId || !this.scheduleForm.scheduledAt) return;
-    this.scheduling = true;
-    const appId = this.scheduleAppId;
-    const app = this.apps.find(a => a.applicationId === appId);
+    const appId = this.scheduleAppId();
+    const form = this.scheduleForm();
+    if (!appId || !form.scheduledAt) return;
+    this.scheduling.set(true);
+    const app = this.apps().find(a => a.applicationId === appId);
 
     this.interviewSvc.schedule({
       applicationId: appId,
-      scheduledAt: this.normalizeDateTime(this.scheduleForm.scheduledAt),
-      mode: this.scheduleForm.mode,
-      meetLink: this.scheduleForm.meetLink,
-      location: this.scheduleForm.location,
-      notes: this.scheduleForm.notes
+      scheduledAt: this.normalizeDateTime(form.scheduledAt),
+      mode: form.mode,
+      meetLink: form.meetLink,
+      location: form.location,
+      notes: form.notes
     }).subscribe({
       next: () => {
         if (!app) {
-          this.showScheduleModal = false;
-          this.scheduling = false;
-          this.msgType = 'success';
-          this.msg = 'Interview scheduled and candidate notified!';
+          this.showScheduleModal.set(false);
+          this.scheduling.set(false);
+          this.msgType.set('success');
+          this.msg.set('Interview scheduled and candidate notified!');
           return;
         }
         this.appSvc.updateStatus(app.applicationId, 'INTERVIEW_SCHEDULED').subscribe({
           next: () => {
-            this.apps = this.apps.map(a =>
-              a.applicationId === app.applicationId ? { ...a, status: 'INTERVIEW_SCHEDULED' } : a
+            this.apps.update(apps =>
+              apps.map(a => a.applicationId === app.applicationId ? { ...a, status: 'INTERVIEW_SCHEDULED' } : a)
             );
-            this.interviewStatusByAppId = { ...this.interviewStatusByAppId, [app.applicationId]: 'SCHEDULED' };
-            this.showScheduleModal = false;
-            this.scheduling = false;
-            this.msgType = 'success';
-            this.msg = 'Interview scheduled and candidate notified!';
+            this.interviewStatusByAppId.update(m => ({ ...m, [app.applicationId]: 'SCHEDULED' }));
+            this.showScheduleModal.set(false);
+            this.scheduling.set(false);
+            this.msgType.set('success');
+            this.msg.set('Interview scheduled and candidate notified!');
           },
           error: err => {
-            this.scheduling = false;
-            this.msgType = 'error';
-            this.msg = err.error?.message || 'Interview saved, but status update failed.';
+            this.scheduling.set(false);
+            this.msgType.set('error');
+            this.msg.set(err.error?.message || 'Interview saved, but status update failed.');
           }
         });
       },
       error: err => {
-        this.msgType = 'error';
-        this.msg = err.error?.message || 'Failed to schedule interview';
-        this.scheduling = false;
+        this.msgType.set('error');
+        this.msg.set(err.error?.message || 'Failed to schedule interview');
+        this.scheduling.set(false);
       }
     });
   }
 
   offerCandidate(app: Application) {
     if (!this.canOffer(app)) return;
-    this.updatingId = app.applicationId;
-    this.msg = '';
+    this.updatingId.set(app.applicationId);
+    this.msg.set('');
     this.appSvc.finalizeStatus(app.applicationId, 'OFFERED').subscribe({
       next: () => {
-        this.apps = this.apps.map(a =>
-          a.applicationId === app.applicationId ? { ...a, status: 'OFFERED' } : a
+        this.apps.update(apps =>
+          apps.map(a => a.applicationId === app.applicationId ? { ...a, status: 'OFFERED' } : a)
         );
-        this.updatingId = null;
-        this.msgType = 'success';
-        const candidate = this.candidateByAppId[app.applicationId];
+        this.updatingId.set(null);
+        this.msgType.set('success');
+        const candidate = this.candidateByAppId()[app.applicationId];
         const name = candidate?.fullName || 'Candidate';
-        this.msg = `🎉 ${name} has been offered! They will be notified by email.`;
+        this.msg.set(`🎉 ${name} has been offered! They will be notified by email.`);
       },
       error: err => {
-        this.updatingId = null;
-        this.msgType = 'error';
-        this.msg = err.error?.message || 'Failed to offer candidate';
+        this.updatingId.set(null);
+        this.msgType.set('error');
+        this.msg.set(err.error?.message || 'Failed to offer candidate');
       }
     });
   }
 
   rejectCandidate(app: Application) {
-    this.updatingId = app.applicationId;
-    this.msg = '';
+    this.updatingId.set(app.applicationId);
+    this.msg.set('');
     this.appSvc.finalizeStatus(app.applicationId, 'REJECTED').subscribe({
       next: () => {
-        this.apps = this.apps.map(a =>
-          a.applicationId === app.applicationId ? { ...a, status: 'REJECTED' } : a
+        this.apps.update(apps =>
+          apps.map(a => a.applicationId === app.applicationId ? { ...a, status: 'REJECTED' } : a)
         );
-        this.updatingId = null;
-        this.msgType = 'success';
-        this.msg = 'Application rejected.';
+        this.updatingId.set(null);
+        this.msgType.set('success');
+        this.msg.set('Application rejected.');
       },
       error: err => {
-        this.updatingId = null;
-        this.msgType = 'error';
-        this.msg = err.error?.message || 'Failed to reject candidate';
+        this.updatingId.set(null);
+        this.msgType.set('error');
+        this.msg.set(err.error?.message || 'Failed to reject candidate');
       }
     });
   }
 
   canOffer(app: Application): boolean {
     return app.status === 'INTERVIEW_SCHEDULED' &&
-      this.interviewStatusByAppId[app.applicationId] === 'CONFIRMED';
+      this.interviewStatusByAppId()[app.applicationId] === 'CONFIRMED';
   }
 
   statusClass(s: string) {
@@ -232,17 +234,15 @@ export class RecruiterApplicationsComponent implements OnInit {
   }
 
   interviewStatusLabel(appId: number): string {
-    const status = this.interviewStatusByAppId[appId];
+    const status = this.interviewStatusByAppId()[appId];
     if (!status) return 'No interview yet';
     const m: Record<string, string> = { SCHEDULED: 'Scheduled', RESCHEDULED: 'Rescheduled', CONFIRMED: 'Confirmed ✓', CANCELLED: 'Cancelled', COMPLETED: 'Completed' };
     return m[status] || status;
   }
 
   interviewStatusClass(appId: number): string {
-    const status = this.interviewStatusByAppId[appId];
+    const status = this.interviewStatusByAppId()[appId];
     const m: Record<string, string> = { SCHEDULED: 'badge-amber', RESCHEDULED: 'badge-navy', CONFIRMED: 'badge-teal', CANCELLED: 'badge-rose', COMPLETED: 'badge-gray' };
     return status ? (m[status] || 'badge-gray') : 'badge-gray';
   }
-
-  get selectedJob() { return this.jobs.find(j => j.jobId === this.selectedJobId); }
 }

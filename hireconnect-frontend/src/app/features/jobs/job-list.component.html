@@ -18,54 +18,54 @@
   <div class="jobs-header">
     <div class="container">
       <h1>Browse All Jobs</h1>
-      <p>{{filteredJobs.length}} opportunities available</p>
+      <p>{{filteredJobs().length}} opportunities available</p>
 
       <div class="filters-row">
         <div class="search-bar" style="flex:1; min-width:200px">
           <svg width="18" height="18" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input [(ngModel)]="searchTitle" (ngModelChange)="filter()" placeholder="Job title or company..." />
+          <input [ngModel]="searchTitle()" (ngModelChange)="searchTitle.set($event); filter()" placeholder="Job title or company..." />
         </div>
         <div class="search-bar" style="min-width:180px">
           <svg width="16" height="16" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-          <input [(ngModel)]="searchLocation" (ngModelChange)="filter()" placeholder="Location..." />
+          <input [ngModel]="searchLocation()" (ngModelChange)="searchLocation.set($event); filter()" placeholder="Location..." />
         </div>
-        <select class="form-control" style="width:160px" [(ngModel)]="selectedCategory" (ngModelChange)="filter()">
+        <select class="form-control" style="width:160px" [ngModel]="selectedCategory()" (ngModelChange)="selectedCategory.set($event); filter()">
           <option [ngValue]="''">All Categories</option>
           <option *ngFor="let c of categories" [ngValue]="c">{{c}}</option>
         </select>
-        <select class="form-control" style="width:150px" [(ngModel)]="selectedType" (ngModelChange)="filter()">
+        <select class="form-control" style="width:150px" [ngModel]="selectedType()" (ngModelChange)="selectedType.set($event); filter()">
           <option [ngValue]="''">All Types</option>
           <option *ngFor="let t of types" [ngValue]="t">{{t}}</option>
         </select>
-        <button class="btn btn-ghost btn-sm" (click)="clearFilters()" *ngIf="searchTitle || searchLocation || selectedCategory || selectedType">Clear</button>
+        <button class="btn btn-ghost btn-sm" (click)="clearFilters()" *ngIf="searchTitle() || searchLocation() || selectedCategory() || selectedType()">Clear</button>
       </div>
     </div>
   </div>
 
   <div class="container" style="padding-top: 32px; padding-bottom: 60px;">
-    <div class="loading-wrapper" *ngIf="loading">
+    <div class="loading-wrapper" *ngIf="loading()">
       <div class="spinner"></div>
       <span>Loading jobs...</span>
       <button class="btn btn-ghost btn-sm" style="margin-left:12px" (click)="loadJobs()">Refresh</button>
     </div>
 
-    <div class="empty-state" *ngIf="!loading && loadError">
+    <div class="empty-state" *ngIf="!loading() && loadError()">
       <div class="empty-icon">!</div>
       <div class="empty-title">Could not load jobs</div>
       <div class="empty-text">
-        {{ loadError }}
+        {{ loadError() }}
         <button class="btn btn-ghost btn-sm" style="margin-left:10px" (click)="loadJobs()">Retry</button>
       </div>
     </div>
 
-    <div class="empty-state" *ngIf="!loading && !loadError && filteredJobs.length === 0">
+    <div class="empty-state" *ngIf="!loading() && !loadError() && filteredJobs().length === 0">
       <div class="empty-icon">🔍</div>
       <div class="empty-title">No jobs found</div>
       <div class="empty-text">Try adjusting your filters or <button class="btn btn-ghost btn-sm" (click)="clearFilters()">clear all filters</button></div>
     </div>
 
-    <div class="jobs-grid" *ngIf="!loading && !loadError && filteredJobs.length > 0">
-      <div class="job-card" *ngFor="let job of filteredJobs" [routerLink]="['/jobs', job.jobId]">
+    <div class="jobs-grid" *ngIf="!loading() && !loadError() && filteredJobs().length > 0">
+      <div class="job-card" *ngFor="let job of filteredJobs()" [routerLink]="['/jobs', job.jobId]">
         <div class="flex justify-between items-center" style="margin-bottom: 16px;">
           <div>
             <div class="job-title">{{job.title}}</div>

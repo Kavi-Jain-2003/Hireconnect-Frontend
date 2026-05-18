@@ -5,14 +5,14 @@
   </div>
 </div>
 
-<div class="loading-wrapper" *ngIf="loading"><div class="spinner"></div></div>
+<div class="loading-wrapper" *ngIf="loading()"><div class="spinner"></div></div>
 
-<div class="profile-grid" *ngIf="!loading">
+<div class="profile-grid" *ngIf="!loading()">
   <div class="card">
     <div class="card-header"><h3>Personal Information</h3></div>
     <div class="card-body">
-      <div class="alert alert-success" *ngIf="success">{{success}}</div>
-      <div class="alert alert-error" *ngIf="error">{{error}}</div>
+      <div class="alert alert-success" *ngIf="success()">{{success()}}</div>
+      <div class="alert alert-error" *ngIf="error()">{{error()}}</div>
       <form [formGroup]="form" (ngSubmit)="save()" style="display:flex;flex-direction:column;gap:20px">
         <div class="grid-2">
           <div class="form-group">
@@ -54,18 +54,18 @@
             <span style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em">Skills</span>
           </label>
           <div class="skills-input-row">
-            <input class="form-control" [(ngModel)]="skillInput" [ngModelOptions]="{standalone:true}" placeholder="e.g. Java, Spring Boot" (keydown.enter)="$event.preventDefault(); addSkill()">
+            <input class="form-control" [ngModel]="skillInput()" (ngModelChange)="skillInput.set($event)" [ngModelOptions]="{standalone:true}" placeholder="e.g. Java, Spring Boot" (keydown.enter)="$event.preventDefault(); addSkill()">
             <button type="button" class="btn btn-outline btn-sm" (click)="addSkill()">Add</button>
           </div>
           <div class="job-skills" style="margin-top:12px">
-            <span class="skill-tag" *ngFor="let s of skills">
+            <span class="skill-tag" *ngFor="let s of skills()">
               {{s}} <button type="button" (click)="removeSkill(s)">×</button>
             </span>
           </div>
         </div>
-        <button type="submit" class="btn btn-teal" [disabled]="saving" style="align-self:flex-start;min-width:140px;justify-content:center">
-          <span *ngIf="saving" class="spinner" style="width:16px;height:16px;border-width:2px"></span>
-          <span *ngIf="!saving">{{profile ? 'Update Profile' : 'Create Profile'}}</span>
+        <button type="submit" class="btn btn-teal" [disabled]="saving()" style="align-self:flex-start;min-width:140px;justify-content:center">
+          <span *ngIf="saving()" class="spinner" style="width:16px;height:16px;border-width:2px"></span>
+          <span *ngIf="!saving()">{{profile() ? 'Update Profile' : 'Create Profile'}}</span>
         </button>
       </form>
     </div>
@@ -74,16 +74,16 @@
   <div class="card" style="align-self:start">
     <div class="card-header"><h3>Profile Summary</h3></div>
     <div class="card-body" style="display:flex;flex-direction:column;gap:16px">
-      <div class="avatar-circle">{{(profile?.fullName || auth.getEmail() || 'U')[0].toUpperCase()}}</div>
-      <div *ngIf="profile">
-        <div style="font-size:18px;font-weight:700;color:var(--navy)">{{profile.fullName}}</div>
-        <div class="text-sm text-muted" style="margin-top:2px">{{profile.email}}</div>
-        <div class="text-sm text-muted" style="margin-top:2px">📱 {{profile.mobile}}</div>
-        <div class="text-sm text-muted" style="margin-top:2px">🎓 {{profile.experience}} years experience</div>
+      <div class="avatar-circle">{{(profile()?.fullName || auth.getEmail() || 'U')[0].toUpperCase()}}</div>
+      <div *ngIf="profile()">
+        <div style="font-size:18px;font-weight:700;color:var(--navy)">{{profile().fullName}}</div>
+        <div class="text-sm text-muted" style="margin-top:2px">{{profile().email}}</div>
+        <div class="text-sm text-muted" style="margin-top:2px">📱 {{profile().mobile}}</div>
+        <div class="text-sm text-muted" style="margin-top:2px">🎓 {{profile().experience}} years experience</div>
       </div>
-      <div *ngIf="!profile" class="text-sm text-muted">Complete your profile to get started</div>
-      <div *ngIf="profile?.resumeUrl">
-        <a [href]="profile?.resumeUrl" target="_blank" class="btn btn-outline btn-sm w-full" style="justify-content:center">View Resume ↗</a>
+      <div *ngIf="!profile()" class="text-sm text-muted">Complete your profile to get started</div>
+      <div *ngIf="profile()?.resumeUrl">
+        <a [href]="profile()?.resumeUrl" target="_blank" class="btn btn-outline btn-sm w-full" style="justify-content:center">View Resume ↗</a>
       </div>
     </div>
   </div>

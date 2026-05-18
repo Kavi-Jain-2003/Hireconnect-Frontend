@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -11,9 +11,9 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class LoginComponent implements OnInit {
   form: FormGroup;
-  loading = false;
-  error = '';
-  showPassword = false;
+  loading = signal(false);
+  error = signal('');
+  showPassword = signal(false);
 
   constructor(
     private fb: FormBuilder,
@@ -28,7 +28,6 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Handle GitHub OAuth callback — token comes as query param ?token=xxx&email=xxx&role=xxx
     this.route.queryParams.subscribe(params => {
       if (params['token']) {
         this.auth.loginWithToken(params['token'], params['email'] || '', params['role'] || 'CANDIDATE');
@@ -42,23 +41,22 @@ export class LoginComponent implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
-    this.loading = true;
-    this.error = '';
+    this.loading.set(true);
+    this.error.set('');
     this.auth.login(this.form.value).subscribe({
       next: res => {
         this.redirectByRole(res.role);
       },
       error: err => {
-        this.error = err.error?.message || 'Invalid email or password. Please try again.';
-        this.loading = false;
+        this.error.set(err.error?.message || 'Invalid email or password. Please try again.');
+        this.loading.set(false);
       }
     });
   }
 
-  // ── centralised role → route mapping ──────────────────────────
   private redirectByRole(role: string) {
     const r = (role || '').replace(/^ROLE_/, '').toUpperCase();
-    if (r === 'ADMIN')     this.router.navigate(['/admin/dashboard']);
+    if (r === 'ADMIN')          this.router.navigate(['/admin/dashboard']);
     else if (r === 'RECRUITER') this.router.navigate(['/recruiter/dashboard']);
     else                        this.router.navigate(['/candidate/dashboard']);
   }

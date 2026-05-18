@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProfileService } from '../../../core/services/profile.service';
 import { ApplicationService } from '../../../core/services/application.service';
@@ -12,34 +12,38 @@ import { CandidateProfile, Application, Job } from '../../../core/models';
   styleUrls: ['./candidate-dashboard.component.scss']
 })
 export class CandidateDashboardComponent implements OnInit {
-  profile: CandidateProfile | null = null;
-  applications: Application[] = [];
-  recentJobs: Job[] = [];
-  loading = true;
-  profileMissing = false;
+  profile = signal<CandidateProfile | null>(null);
+  applications = signal<Application[]>([]);
+  recentJobs = signal<Job[]>([]);
+  loading = signal(true);
+  profileMissing = signal(false);
 
-  get appliedCount()     { return this.applications.length; }
-  get shortlistedCount() { return this.applications.filter(a => a.status === 'SHORTLISTED').length; }
-  get interviewCount()   { return this.applications.filter(a => a.status === 'INTERVIEW_SCHEDULED').length; }
-  get offeredCount()     { return this.applications.filter(a => a.status === 'OFFERED').length; }
+  appliedCount     = computed(() => this.applications().length);
+  shortlistedCount = computed(() => this.applications().filter(a => a.status === 'SHORTLISTED').length);
+  interviewCount   = computed(() => this.applications().filter(a => a.status === 'INTERVIEW_SCHEDULED').length);
+  offeredCount     = computed(() => this.applications().filter(a => a.status === 'OFFERED').length);
 
-  constructor(public auth: AuthService, private profileSvc: ProfileService,
-    private appSvc: ApplicationService, private jobSvc: JobService) {}
+  constructor(
+    public auth: AuthService,
+    private profileSvc: ProfileService,
+    private appSvc: ApplicationService,
+    private jobSvc: JobService
+  ) {}
 
   ngOnInit() {
     this.jobSvc.getAllJobs().subscribe({
-      next: jobs => { this.recentJobs = jobs.filter(j => j.status === 'OPEN').slice(0, 4); },
+      next: jobs => { this.recentJobs.set(jobs.filter(j => j.status === 'OPEN').slice(0, 4)); },
       error: () => {}
     });
     this.profileSvc.getCandidateByEmail(this.auth.getEmail()!).subscribe({
       next: p => {
-        this.profile = p;
+        this.profile.set(p);
         this.appSvc.getByCandidate(p.profileId).subscribe({
-          next: apps => { this.applications = apps; this.loading = false; },
-          error: () => { this.loading = false; }
+          next: apps => { this.applications.set(apps); this.loading.set(false); },
+          error: () => { this.loading.set(false); }
         });
       },
-      error: () => { this.profileMissing = true; this.loading = false; }
+      error: () => { this.profileMissing.set(true); this.loading.set(false); }
     });
   }
 

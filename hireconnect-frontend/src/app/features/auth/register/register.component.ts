@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -11,11 +11,11 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class RegisterComponent {
   form: FormGroup;
-  loading = false;
-  error = '';
-  success = '';
-  selectedRole: 'CANDIDATE' | 'RECRUITER' = 'CANDIDATE';
-  showPassword = false;
+  loading = signal(false);
+  error = signal('');
+  success = signal('');
+  selectedRole = signal<'CANDIDATE' | 'RECRUITER'>('CANDIDATE');
+  showPassword = signal(false);
 
   constructor(private fb: FormBuilder, private auth: AuthService, private router: Router) {
     this.form = this.fb.group({
@@ -26,8 +26,12 @@ export class RegisterComponent {
   }
 
   selectRole(role: 'CANDIDATE' | 'RECRUITER') {
-    this.selectedRole = role;
+    this.selectedRole.set(role);
     this.form.patchValue({ role });
+  }
+
+  loginWithGitHub() {
+    window.location.href = 'http://localhost:8081/oauth2/authorization/github';
   }
 
   submit() {
@@ -35,24 +39,24 @@ export class RegisterComponent {
       this.form.markAllAsTouched();
       return;
     }
-    this.loading = true;
-    this.error = '';
-    this.success = '';
+    this.loading.set(true);
+    this.error.set('');
+    this.success.set('');
 
     this.auth.register(this.form.value).subscribe({
       next: () => {
-        this.success = '✓ Account created! Redirecting to login…';
-        this.loading = false;
+        this.success.set('✓ Account created! Redirecting to login…');
+        this.loading.set(false);
         setTimeout(() => this.router.navigate(['/auth/login']), 1500);
       },
       error: err => {
         const msg: string = err.error?.message || '';
         if (msg.toLowerCase().includes('already')) {
-          this.error = 'This email is already registered. Please sign in instead.';
+          this.error.set('This email is already registered. Please sign in instead.');
         } else {
-          this.error = msg || 'Registration failed. Please try again.';
+          this.error.set(msg || 'Registration failed. Please try again.');
         }
-        this.loading = false;
+        this.loading.set(false);
       }
     });
   }

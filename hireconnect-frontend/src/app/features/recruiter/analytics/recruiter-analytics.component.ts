@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProfileService } from '../../../core/services/profile.service';
 import { AnalyticsService } from '../../../core/services/analytics.service';
@@ -11,9 +11,9 @@ import { AnalyticsSummary } from '../../../core/models';
   styleUrls: ['./recruiter-analytics.component.scss']
 })
 export class RecruiterAnalyticsComponent implements OnInit {
-  summary: AnalyticsSummary | null = null;
-  loading = true;
-  error = '';
+  summary = signal<AnalyticsSummary | null>(null);
+  loading = signal(true);
+  error = signal('');
 
   constructor(
     private auth: AuthService,
@@ -25,11 +25,11 @@ export class RecruiterAnalyticsComponent implements OnInit {
     this.profileSvc.getRecruiterByEmail(this.auth.getEmail()!).subscribe({
       next: p => {
         this.analyticsSvc.getRecruiterStats(p.profileId).subscribe({
-          next: s => { this.summary = s; this.loading = false; },
-          error: () => { this.loading = false; this.error = 'Could not load analytics.'; }
+          next: s => { this.summary.set(s); this.loading.set(false); },
+          error: () => { this.loading.set(false); this.error.set('Could not load analytics.'); }
         });
       },
-      error: () => { this.loading = false; this.error = 'Profile not found.'; }
+      error: () => { this.loading.set(false); this.error.set('Profile not found.'); }
     });
   }
 

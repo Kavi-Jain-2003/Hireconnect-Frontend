@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiResponse } from '../../../core/models';
@@ -21,14 +21,14 @@ interface Subscription {
   styleUrls: ['./recruiter-subscription.component.scss']
 })
 export class RecruiterSubscriptionComponent implements OnInit {
-  subscriptions: Subscription[] = [];
-  active: Subscription | null = null;
-  loading = true;
-  subscribing = false;
-  cancelling: number | null = null;
-  renewing: number | null = null;
-  msg = '';
-  msgType: 'success' | 'error' = 'success';
+  subscriptions = signal<Subscription[]>([]);
+  active = signal<Subscription | null>(null);
+  loading = signal(true);
+  subscribing = signal(false);
+  cancelling = signal<number | null>(null);
+  renewing = signal<number | null>(null);
+  msg = signal('');
+  msgType = signal<'success' | 'error'>('success');
 
   plans = [
     { id: 'FREE',         name: 'Free',         price: 0,    posts: 3,  features: ['3 job posts/month', 'Basic analytics', 'Email support'] },
@@ -41,40 +41,37 @@ export class RecruiterSubscriptionComponent implements OnInit {
   ngOnInit() { this.load(); }
 
   load() {
-    this.loading = true;
+    this.loading.set(true);
     this.http.get<ApiResponse<Subscription[]>>('/subscriptions/my').pipe(map(r => r.data || [])).subscribe({
       next: subs => {
-        this.subscriptions = subs;
-        this.loading = false;
+        this.subscriptions.set(subs);
+        this.loading.set(false);
         this.http.get<ApiResponse<Subscription>>('/subscriptions/my/active').pipe(map(r => r.data)).subscribe({
-          next: a => { this.active = a; },
-          error: () => { this.active = null; }
+          next: a => { this.active.set(a); },
+          error: () => { this.active.set(null); }
         });
       },
-      error: () => { this.loading = false; }
+      error: () => { this.loading.set(false); }
     });
   }
 
   subscribe(plan: string) {
-    if (this.subscribing) return;
-    this.subscribing = true;
-    this.msg = '';
+    if (this.subscribing()) return;
+    this.subscribing.set(true);
+    this.msg.set('');
 
-    // Step 1: Create order (or activate FREE directly)
     this.http.post<ApiResponse<any>>(`/subscriptions/create-order?plan=${plan}`, {}).subscribe({
       next: res => {
         const data = res.data;
 
-        // FREE plan — backend activated it directly
         if (data.free) {
-          this.msgType = 'success';
-          this.msg = 'Free plan activated!';
-          this.subscribing = false;
+          this.msgType.set('success');
+          this.msg.set('Free plan activated!');
+          this.subscribing.set(false);
           this.load();
           return;
         }
 
-        // Paid plan — open Razorpay popup
         const options = {
           key: data.keyId,
           amount: data.amount * 100,
@@ -83,23 +80,22 @@ export class RecruiterSubscriptionComponent implements OnInit {
           description: `${plan} Plan — 1 Month`,
           order_id: data.orderId,
           handler: (response: any) => {
-            // Step 2: Verify payment with backend
             this.http.post<ApiResponse<Subscription>>('/subscriptions/verify-payment', {
-              razorpay_order_id:  response.razorpay_order_id,
+              razorpay_order_id:   response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
+              razorpay_signature:  response.razorpay_signature,
               plan: plan
             }).subscribe({
               next: () => {
-                this.msgType = 'success';
-                this.msg = `✅ Payment successful! ${this.planLabel(plan)} plan is now active.`;
-                this.subscribing = false;
+                this.msgType.set('success');
+                this.msg.set(`✅ Payment successful! ${this.planLabel(plan)} plan is now active.`);
+                this.subscribing.set(false);
                 this.load();
               },
               error: err => {
-                this.msgType = 'error';
-                this.msg = err.error?.message || 'Payment verification failed. Contact support.';
-                this.subscribing = false;
+                this.msgType.set('error');
+                this.msg.set(err.error?.message || 'Payment verification failed. Contact support.');
+                this.subscribing.set(false);
               }
             });
           },
@@ -107,9 +103,9 @@ export class RecruiterSubscriptionComponent implements OnInit {
           theme: { color: '#2DD4BF' },
           modal: {
             ondismiss: () => {
-              this.subscribing = false;
-              this.msg = 'Payment cancelled.';
-              this.msgType = 'error';
+              this.subscribing.set(false);
+              this.msg.set('Payment cancelled.');
+              this.msgType.set('error');
             }
           }
         };
@@ -118,31 +114,31 @@ export class RecruiterSubscriptionComponent implements OnInit {
         rzp.open();
       },
       error: err => {
-        this.msgType = 'error';
-        this.msg = err.error?.message || 'Could not initiate payment';
-        this.subscribing = false;
+        this.msgType.set('error');
+        this.msg.set(err.error?.message || 'Could not initiate payment');
+        this.subscribing.set(false);
       }
     });
   }
 
   cancel(id: number) {
     if (!confirm('Cancel this subscription?')) return;
-    this.cancelling = id;
+    this.cancelling.set(id);
     this.http.post<ApiResponse>(`/subscriptions/cancel/${id}`, {}).subscribe({
-      next: () => { this.msgType = 'success'; this.msg = 'Subscription cancelled.'; this.cancelling = null; this.load(); },
-      error: err => { this.msgType = 'error'; this.msg = err.error?.message || 'Failed'; this.cancelling = null; }
+      next: () => { this.msgType.set('success'); this.msg.set('Subscription cancelled.'); this.cancelling.set(null); this.load(); },
+      error: err => { this.msgType.set('error'); this.msg.set(err.error?.message || 'Failed'); this.cancelling.set(null); }
     });
   }
 
   renew(id: number) {
-    this.renewing = id;
+    this.renewing.set(id);
     this.http.post<ApiResponse>(`/subscriptions/renew/${id}`, {}).subscribe({
-      next: () => { this.msgType = 'success'; this.msg = 'Subscription renewed!'; this.renewing = null; this.load(); },
-      error: err => { this.msgType = 'error'; this.msg = err.error?.message || 'Failed'; this.renewing = null; }
+      next: () => { this.msgType.set('success'); this.msg.set('Subscription renewed!'); this.renewing.set(null); this.load(); },
+      error: err => { this.msgType.set('error'); this.msg.set(err.error?.message || 'Failed'); this.renewing.set(null); }
     });
   }
 
-  isActive(planId: string) { return this.active?.plan === planId && this.active?.status === 'ACTIVE'; }
+  isActive(planId: string) { return this.active()?.plan === planId && this.active()?.status === 'ACTIVE'; }
   planPrice(p: number) { return p === 0 ? 'Free' : `₹${p.toLocaleString('en-IN')}/mo`; }
   planLabel(planId: string) { return this.plans.find(p => p.id === planId)?.name || planId; }
 }

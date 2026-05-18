@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProfileService } from '../../../core/services/profile.service';
@@ -11,14 +11,14 @@ import { CandidateProfile } from '../../../core/models';
   styleUrls: ['./candidate-profile.component.scss']
 })
 export class CandidateProfileComponent implements OnInit {
-  profile: CandidateProfile | null = null;
+  profile = signal<CandidateProfile | null>(null);
   form!: FormGroup;
-  loading = true;
-  saving = false;
-  success = '';
-  error = '';
-  skillInput = '';
-  skills: string[] = [];
+  loading = signal(true);
+  saving = signal(false);
+  success = signal('');
+  error = signal('');
+  skillInput = signal('');
+  skills = signal<string[]>([]);
 
   constructor(
     private auth: AuthService,
@@ -39,8 +39,8 @@ export class CandidateProfileComponent implements OnInit {
 
     this.profileSvc.getCandidateByEmail(this.auth.getEmail()!).subscribe({
       next: p => {
-        this.profile = p;
-        this.skills  = p.skills || [];
+        this.profile.set(p);
+        this.skills.set(p.skills || []);
         this.form.patchValue({
           fullName: p.fullName,
           email: p.email || this.auth.getEmail() || '',
@@ -50,44 +50,44 @@ export class CandidateProfileComponent implements OnInit {
           experience: p.experience,
           resumeUrl: p.resumeUrl
         });
-        this.loading = false;
+        this.loading.set(false);
       },
-      error: () => { this.loading = false; } // 404 = not created yet, that's OK
+      error: () => { this.loading.set(false); }
     });
   }
 
   addSkill() {
-    const s = this.skillInput.trim();
-    if (s && !this.skills.includes(s)) this.skills.push(s);
-    this.skillInput = '';
+    const s = this.skillInput().trim();
+    if (s && !this.skills().includes(s)) this.skills.update(skills => [...skills, s]);
+    this.skillInput.set('');
   }
 
-  removeSkill(s: string) { this.skills = this.skills.filter(sk => sk !== s); }
+  removeSkill(s: string) { this.skills.update(skills => skills.filter(sk => sk !== s)); }
 
   save() {
     if (this.form.invalid) return;
-    this.saving = true; this.success = ''; this.error = '';
-    // email is injected from JWT by backend, so we only send the rest
+    this.saving.set(true);
+    this.success.set('');
+    this.error.set('');
     const { email, dob, gender, ...rest } = this.form.value;
-    const payload = { ...rest, skills: this.skills };
+    const payload = { ...rest, skills: this.skills() };
 
-    const obs = this.profile
-      ? this.profileSvc.updateCandidateProfile(this.profile.profileId, payload)
+    const obs = this.profile()
+      ? this.profileSvc.updateCandidateProfile(this.profile()!.profileId, payload)
       : this.profileSvc.createCandidateProfile(payload);
 
     obs.subscribe({
       next: () => {
-        this.saving = false;
-        this.success = 'Profile saved successfully!';
-        // Reload profile to get latest state
+        this.saving.set(false);
+        this.success.set('Profile saved successfully!');
         this.profileSvc.getCandidateByEmail(this.auth.getEmail()!).subscribe({
-          next: p => { this.profile = p; },
+          next: p => { this.profile.set(p); },
           error: () => {}
         });
       },
       error: err => {
-        this.error = err.error?.message || 'Failed to save profile.';
-        this.saving = false;
+        this.error.set(err.error?.message || 'Failed to save profile.');
+        this.saving.set(false);
       }
     });
   }

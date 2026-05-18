@@ -6,44 +6,44 @@
 </div>
 
 <!-- Alerts -->
-<div class="alert alert-success" *ngIf="successMsg" style="margin-bottom:16px">✓ {{successMsg}}</div>
-<div class="alert alert-error"   *ngIf="error"      style="margin-bottom:16px">{{error}}</div>
+<div class="alert alert-success" *ngIf="successMsg()" style="margin-bottom:16px">✓ {{successMsg()}}</div>
+<div class="alert alert-error"   *ngIf="error()"      style="margin-bottom:16px">{{error()}}</div>
 
 <!-- Filters -->
 <div class="card mb-24">
   <div class="card-body" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
     <input class="form-control" style="flex:1;min-width:200px" placeholder="Search by email…"
-      [(ngModel)]="searchTerm" (input)="applyFilters()" />
+      [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" />
 
-    <select class="form-control" style="width:150px" [(ngModel)]="roleFilter" (change)="applyFilters()">
+    <select class="form-control" style="width:150px" [ngModel]="roleFilter()" (ngModelChange)="roleFilter.set($event)">
       <option value="">All Roles</option>
       <option value="CANDIDATE">Candidate</option>
       <option value="RECRUITER">Recruiter</option>
       <option value="ADMIN">Admin</option>
     </select>
 
-    <select class="form-control" style="width:150px" [(ngModel)]="statusFilter" (change)="applyFilters()">
+    <select class="form-control" style="width:150px" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
       <option value="">All Status</option>
       <option value="active">Active</option>
       <option value="suspended">Suspended</option>
     </select>
 
-    <span class="text-sm text-muted">{{filtered.length}} of {{users.length}} users</span>
+    <span class="text-sm text-muted">{{filtered().length}} of {{users().length}} users</span>
   </div>
 </div>
 
 <!-- Loading -->
-<div class="loading-wrapper" *ngIf="loading"><div class="spinner"></div><span>Loading users…</span></div>
+<div class="loading-wrapper" *ngIf="loading()"><div class="spinner"></div><span>Loading users…</span></div>
 
 <!-- Table -->
-<div class="card" *ngIf="!loading">
-  <div class="empty-state" style="padding:60px" *ngIf="filtered.length === 0">
+<div class="card" *ngIf="!loading()">
+  <div class="empty-state" style="padding:60px" *ngIf="filtered().length === 0">
     <div class="empty-icon">🔍</div>
     <div class="empty-title">No users match your filters</div>
     <div class="empty-text">Try changing the search or filter above</div>
   </div>
 
-  <table class="data-table" *ngIf="filtered.length > 0">
+  <table class="data-table" *ngIf="filtered().length > 0">
     <thead>
       <tr>
         <th>ID</th>
@@ -55,7 +55,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let u of filtered" [style.opacity]="actionLoading === u.userId ? '0.5' : '1'">
+      <tr *ngFor="let u of filtered()" [style.opacity]="actionLoading() === u.userId ? '0.5' : '1'">
         <td style="color:var(--text-muted);font-size:13px">#{{u.userId}}</td>
         <td style="font-weight:500;color:var(--navy)">{{u.email}}</td>
         <td>
@@ -75,21 +75,21 @@
             <button *ngIf="!u.suspended"
               class="btn btn-ghost btn-sm"
               style="color:var(--amber);margin-right:8px"
-              [disabled]="actionLoading === u.userId"
+              [disabled]="actionLoading() === u.userId"
               (click)="suspend(u)">
               Suspend
             </button>
             <button *ngIf="u.suspended"
               class="btn btn-ghost btn-sm"
               style="color:var(--teal);margin-right:8px"
-              [disabled]="actionLoading === u.userId"
+              [disabled]="actionLoading() === u.userId"
               (click)="unsuspend(u)">
               Reactivate
             </button>
             <button
               class="btn btn-ghost btn-sm"
               style="color:var(--rose)"
-              [disabled]="actionLoading === u.userId"
+              [disabled]="actionLoading() === u.userId"
               (click)="confirmDelete(u.userId)">
               Delete
             </button>
@@ -102,14 +102,14 @@
 </div>
 
 <!-- Delete Confirm Modal -->
-<div class="modal-overlay" *ngIf="deleteTargetId !== null">
+<div class="modal-overlay" *ngIf="deleteTargetId() !== null">
   <div class="modal" style="max-width:420px">
     <div class="modal-header">
       <h3 style="color:var(--rose)">⚠️ Delete User</h3>
     </div>
     <div class="modal-body">
       <p style="color:var(--text-secondary);line-height:1.6">
-        This will <strong>permanently delete</strong> user #{{deleteTargetId}} and all their data.
+        This will <strong>permanently delete</strong> user #{{deleteTargetId()}} and all their data.
         This action <strong>cannot be undone</strong>.
       </p>
     </div>

@@ -1,15 +1,25 @@
-/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
-/* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
-    "types": [
-      "vitest/globals"
-    ]
+    "module": "CommonJS",
+    "moduleResolution": "node16",
+    "types": ["jest", "node"],
+    "typeRoots": ["node_modules/@types", "node_modules"],
+    "esModuleInterop": true,
+    "emitDecoratorMetadata": true,
+    "isolatedModules": false,
+    "skipLibCheck": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "noImplicitOverride": false,
+    "noPropertyAccessFromIndexSignature": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": false
   },
   "include": [
+    "src/**/*.spec.ts",
     "src/**/*.d.ts",
-    "src/**/*.ts"
+    "setup-jest.ts"
   ]
 }

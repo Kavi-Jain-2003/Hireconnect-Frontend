@@ -4,16 +4,14 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule, Routes } from '@angular/router';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
-import { GithubCallbackComponent } from './github-callback/github-callback.component';
 
 const routes: Routes = [
-  { path: 'login',           component: LoginComponent },
-  { path: 'register',        component: RegisterComponent },
-  { path: 'github/callback', component: GithubCallbackComponent }
+  { path: 'login',    component: LoginComponent },
+  { path: 'register', component: RegisterComponent }
 ];
 
 @NgModule({
-  declarations: [LoginComponent, RegisterComponent, GithubCallbackComponent],
+  declarations: [LoginComponent, RegisterComponent],
   imports: [CommonModule, ReactiveFormsModule, RouterModule.forChild(routes)]
 })
 export class AuthModule {}

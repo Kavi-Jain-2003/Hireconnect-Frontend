@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { AdminService, AdminUser } from '../../../core/services/admin.service';
 
 @Component({
@@ -7,106 +7,96 @@ import { AdminService, AdminUser } from '../../../core/services/admin.service';
   templateUrl: './admin-users.component.html'
 })
 export class AdminUsersComponent implements OnInit {
-  users: AdminUser[] = [];
-  filtered: AdminUser[] = [];
-  loading = true;
-  actionLoading: number | null = null;
-  error = '';
-  successMsg = '';
+  users = signal<AdminUser[]>([]);
+  loading = signal(true);
+  actionLoading = signal<number | null>(null);
+  error = signal('');
+  successMsg = signal('');
+  searchTerm = signal('');
+  roleFilter = signal('');
+  statusFilter = signal('');
+  deleteTargetId = signal<number | null>(null);
 
-  searchTerm = '';
-  roleFilter = '';
-  statusFilter = '';
-
-  deleteTargetId: number | null = null;
+  filtered = computed(() => {
+    const term   = this.searchTerm().toLowerCase();
+    const role   = this.roleFilter();
+    const status = this.statusFilter();
+    return this.users().filter(u => {
+      const matchSearch = !term   || u.email.toLowerCase().includes(term);
+      const matchRole   = !role   || u.role === role;
+      const matchStatus = status === '' ? true : status === 'active' ? !u.suspended : u.suspended;
+      return matchSearch && matchRole && matchStatus;
+    });
+  });
 
   constructor(private adminSvc: AdminService) {}
 
   ngOnInit(): void { this.loadUsers(); }
 
   loadUsers(): void {
-    this.loading = true;
+    this.loading.set(true);
     this.adminSvc.getAllUsers().subscribe({
-      next: (users: AdminUser[]) => {
-        this.users = users;
-        this.applyFilters();
-        this.loading = false;
-      },
-      error: () => { this.error = 'Failed to load users.'; this.loading = false; }
-    });
-  }
-
-  applyFilters(): void {
-    this.filtered = this.users.filter(u => {
-      const matchSearch = !this.searchTerm ||
-        u.email.toLowerCase().includes(this.searchTerm.toLowerCase());
-      const matchRole   = !this.roleFilter || u.role === this.roleFilter;
-      const matchStatus = this.statusFilter === ''
-        ? true
-        : this.statusFilter === 'active' ? !u.suspended : u.suspended;
-      return matchSearch && matchRole && matchStatus;
+      next: (users: AdminUser[]) => { this.users.set(users); this.loading.set(false); },
+      error: () => { this.error.set('Failed to load users.'); this.loading.set(false); }
     });
   }
 
   suspend(user: AdminUser): void {
-    this.actionLoading = user.userId;
+    this.actionLoading.set(user.userId);
     this.clearMessages();
     this.adminSvc.suspendUser(user.userId).subscribe({
       next: () => {
-        user.suspended = true;
-        this.applyFilters();
-        this.successMsg = `${user.email} has been suspended.`;
-        this.actionLoading = null;
+        this.users.update(users => users.map(u => u.userId === user.userId ? { ...u, suspended: true } : u));
+        this.successMsg.set(`${user.email} has been suspended.`);
+        this.actionLoading.set(null);
       },
       error: (err: { error?: { message?: string } }) => {
-        this.error = err.error?.message || 'Failed to suspend user.';
-        this.actionLoading = null;
+        this.error.set(err.error?.message || 'Failed to suspend user.');
+        this.actionLoading.set(null);
       }
     });
   }
 
   unsuspend(user: AdminUser): void {
-    this.actionLoading = user.userId;
+    this.actionLoading.set(user.userId);
     this.clearMessages();
     this.adminSvc.unsuspendUser(user.userId).subscribe({
       next: () => {
-        user.suspended = false;
-        this.applyFilters();
-        this.successMsg = `${user.email} has been reactivated.`;
-        this.actionLoading = null;
+        this.users.update(users => users.map(u => u.userId === user.userId ? { ...u, suspended: false } : u));
+        this.successMsg.set(`${user.email} has been reactivated.`);
+        this.actionLoading.set(null);
       },
       error: (err: { error?: { message?: string } }) => {
-        this.error = err.error?.message || 'Failed to unsuspend user.';
-        this.actionLoading = null;
+        this.error.set(err.error?.message || 'Failed to unsuspend user.');
+        this.actionLoading.set(null);
       }
     });
   }
 
-  confirmDelete(userId: number): void { this.deleteTargetId = userId; }
-  cancelDelete(): void { this.deleteTargetId = null; }
+  confirmDelete(userId: number): void { this.deleteTargetId.set(userId); }
+  cancelDelete(): void { this.deleteTargetId.set(null); }
 
   deleteUser(): void {
-    if (!this.deleteTargetId) return;
-    const id = this.deleteTargetId;
-    this.actionLoading = id;
+    const id = this.deleteTargetId();
+    if (!id) return;
+    this.actionLoading.set(id);
     this.clearMessages();
     this.adminSvc.deleteUser(id).subscribe({
       next: () => {
-        this.users = this.users.filter(u => u.userId !== id);
-        this.applyFilters();
-        this.successMsg = 'User deleted successfully.';
-        this.deleteTargetId = null;
-        this.actionLoading = null;
+        this.users.update(users => users.filter(u => u.userId !== id));
+        this.successMsg.set('User deleted successfully.');
+        this.deleteTargetId.set(null);
+        this.actionLoading.set(null);
       },
       error: (err: { error?: { message?: string } }) => {
-        this.error = err.error?.message || 'Failed to delete user.';
-        this.deleteTargetId = null;
-        this.actionLoading = null;
+        this.error.set(err.error?.message || 'Failed to delete user.');
+        this.deleteTargetId.set(null);
+        this.actionLoading.set(null);
       }
     });
   }
 
-  clearMessages(): void { this.error = ''; this.successMsg = ''; }
+  clearMessages(): void { this.error.set(''); this.successMsg.set(''); }
 
   roleBadge(role: string): string {
     return role === 'RECRUITER' ? 'badge-amber' : role === 'ADMIN' ? 'badge-navy' : 'badge-teal';

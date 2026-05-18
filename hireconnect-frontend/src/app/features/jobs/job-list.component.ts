@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize, timeout } from 'rxjs/operators';
 import { JobService } from '../../core/services/job.service';
@@ -6,68 +6,73 @@ import { AuthService } from '../../core/services/auth.service';
 import { Job } from '../../core/models';
 
 @Component({
-  standalone: false, selector: 'app-job-list', templateUrl: './job-list.component.html', styleUrls: ['./job-list.component.scss'] })
+  standalone: false,
+  selector: 'app-job-list',
+  templateUrl: './job-list.component.html',
+  styleUrls: ['./job-list.component.scss']
+})
 export class JobListComponent implements OnInit {
-  allJobs: Job[] = [];
-  filteredJobs: Job[] = [];
-  loading = true;
-  searchTitle = '';
-  searchLocation = '';
-  selectedCategory = '';
-  selectedType = '';
-  loadError = '';
+  allJobs = signal<Job[]>([]);
+  filteredJobs = signal<Job[]>([]);
+  loading = signal(true);
+  searchTitle = signal('');
+  searchLocation = signal('');
+  selectedCategory = signal('');
+  selectedType = signal('');
+  loadError = signal('');
+
   categories = ['IT', 'Finance', 'Marketing', 'HR', 'Sales', 'Operations', 'Design', 'Engineering'];
   types = ['Full-time', 'Part-time', 'Contract', 'Internship', 'Remote'];
 
   constructor(private jobService: JobService, public auth: AuthService, private router: Router) {}
 
-  ngOnInit() {
-    this.loadJobs();
-  }
+  ngOnInit() { this.loadJobs(); }
 
   loadJobs() {
-    this.loading = true;
-    this.loadError = '';
+    this.loading.set(true);
+    this.loadError.set('');
 
     this.jobService.getAllJobs().pipe(
       timeout(15000),
-      finalize(() => { this.loading = false; })
+      finalize(() => { this.loading.set(false); })
     ).subscribe({
       next: jobs => {
-        this.allJobs = jobs || [];
+        this.allJobs.set(jobs || []);
         this.applyFilters();
       },
       error: err => {
-        this.allJobs = [];
-        this.filteredJobs = [];
-        this.loadError = err?.name === 'TimeoutError'
-          ? 'Loading jobs took too long. Please try again.'
-          : 'Failed to load jobs. Please try again.';
+        this.allJobs.set([]);
+        this.filteredJobs.set([]);
+        this.loadError.set(
+          err?.name === 'TimeoutError'
+            ? 'Loading jobs took too long. Please try again.'
+            : 'Failed to load jobs. Please try again.'
+        );
       }
     });
   }
 
   applyFilters() {
-    const title = (this.searchTitle || '').trim().toLowerCase();
-    const location = (this.searchLocation || '').trim().toLowerCase();
-    const category = (this.selectedCategory || '').trim();
-    const type = (this.selectedType || '').trim();
+    const title    = this.searchTitle().trim().toLowerCase();
+    const location = this.searchLocation().trim().toLowerCase();
+    const category = this.selectedCategory().trim();
+    const type     = this.selectedType().trim();
 
-    this.filteredJobs = this.allJobs.filter(j =>
-      (!title || j.title.toLowerCase().includes(title) || j.company.toLowerCase().includes(title)) &&
+    this.filteredJobs.set(this.allJobs().filter(j =>
+      (!title    || j.title.toLowerCase().includes(title) || j.company.toLowerCase().includes(title)) &&
       (!location || j.location.toLowerCase().includes(location)) &&
       (!category || j.category === category) &&
-      (!type || j.type === type)
-    );
+      (!type     || j.type === type)
+    ));
   }
 
-  filter() {
-    this.applyFilters();
-  }
+  filter() { this.applyFilters(); }
 
   clearFilters() {
-    this.searchTitle = ''; this.searchLocation = '';
-    this.selectedCategory = ''; this.selectedType = '';
+    this.searchTitle.set('');
+    this.searchLocation.set('');
+    this.selectedCategory.set('');
+    this.selectedType.set('');
     this.applyFilters();
   }
 
