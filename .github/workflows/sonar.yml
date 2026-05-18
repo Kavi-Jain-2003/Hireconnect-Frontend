@@ -2,32 +2,24 @@ name: SonarCloud Analysis
 
 on:
   push:
-    branches:
-      - dev
-      - main
+    branches: [dev, main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   sonar:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: hireconnect-frontend/package-lock.json
 
       - name: Install dependencies
-        run: cd hireconnect-frontend && npm ci
+        run: cd hireconnect-frontend && npm install
 
       - name: Run tests with coverage
         run: cd hireconnect-frontend && npm run test:coverage -- --watchAll=false
